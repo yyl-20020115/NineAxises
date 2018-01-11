@@ -28,57 +28,6 @@ namespace NineAxises
 
         private ManualResetEvent MRE = new ManualResetEvent(false);
 
-        private enum PacketType
-        {
-            Unknown = 0,
-            Gravity = 1,
-            Magnet = 2,
-            AngleSpeed = 3,
-            AngleVale = 4,
-        }
-        private class Packet
-        {
-            public PacketType Type = PacketType.Unknown;
-            public double X = 0.0;
-            public double Y = 0.0;
-            public double Z = 0.0;
-
-            public double Roll
-            {
-                get { return this.X; }
-                set { this.X = value; }
-            }
-            public double Pitch
-            {
-                get { return this.Y; }
-                set { this.Y = value; }
-            }
-            public double Yaw
-            {
-                get { return this.Z; }
-                set { this.Z = value; }
-            }
-
-            public double D => Math.Sqrt(X * X + Y * Y + Z * Z);
-
-            public Packet(PacketType Type = PacketType.Unknown, double X = 0.0,double Y = 0.0, double Z = 0.0)
-            {
-                this.Type = Type;
-                this.X = X;
-                this.Y = Y;
-                this.Z = Z;
-            }
-
-            public Vector3D ToVector()
-            {
-                return new Vector3D(this.X, this.Y, this.Z);
-            }
-        }
-
-        private Packet GravityPacket = new Packet();
-        private Packet MagnetPacket = new Packet();
-        private Packet AngleSpeedPacket = new Packet();
-        private Packet AngleValuePacket = new Packet();
         public MainWindow()
         {
             InitializeComponent();
@@ -195,17 +144,9 @@ namespace NineAxises
             }
         }
 
-        private void UpdateDisplays()
-        {
-            this.GravityDisplay.RedirectPointerTo(this.GravityPacket.ToVector());
-            this.MagnetDisplay.RedirectPointerTo(this.MagnetPacket.ToVector());
-            this.AngleSpeedDisplay.RedirectPointerTo(this.AngleSpeedPacket.ToVector());
-            this.AngleValueDisplay.RotatePointerTo(this.AngleSpeedPacket.ToVector());
-        }
 
         private void DecodeDataAndUpdate(byte[] buffer)
         {
-            PacketType PT = PacketType.Unknown;
             double[] Data = new double[4];
 
             Data[0] = BitConverter.ToInt16(buffer, 2);
@@ -220,32 +161,43 @@ namespace NineAxises
                     break;
                 case 0x51:
                     //Gravity
-                    this.GravityPacket.X = Data[0] / 32768.0 * 16.0;
-                    this.GravityPacket.Y = Data[1] / 32768.0 * 16.0;
-                    this.GravityPacket.Z = Data[2] / 32768.0 * 16.0;
-                    PT = PacketType.Gravity;
+                    this.GravityDisplay.RedirectPointerTo(
+                        new Vector3D(
+                            Data[0] / 32768.0 * 16.0, 
+                            Data[1] / 32768.0 * 16.0, 
+                            Data[2] / 32768.0 * 16.0
+                            )
+                        );
                     break;
                 case 0x52:
                     //AngleSpeed
-                    this.AngleSpeedPacket.X = Data[0] / 32768.0 * 2000.0;
-                    this.AngleSpeedPacket.Y = Data[1] / 32768.0 * 2000.0;
-                    this.AngleSpeedPacket.Z = Data[2] / 32768.0 * 2000.0;
-                    PT = PacketType.AngleSpeed;
+                    this.AngleSpeedDisplay.RedirectPointerTo(
+                        new Vector3D(
+                            Data[0] / 32768.0 * 2000.0, 
+                            Data[1] / 32768.0 * 2000.0, 
+                            Data[2] / 32768.0 * 2000.0
+                            )
+                        );
                     break;
                 case 0x53:
                     //AngleValue
-                    this.AngleValuePacket.Roll = Data[0] / 32768.0 * 180.0;
-                    this.AngleValuePacket.Pitch = Data[1] / 32768.0 * 180.0;
-                    this.AngleValuePacket.Yaw = Data[2] / 32768.0 * 180.0;
-                    PT = PacketType.AngleVale;
-
+                    this.AngleValueDisplay.RedirectPointerTo(
+                        new Vector3D(
+                            Data[0] / 32768.0 * 180.0,
+                            Data[1] / 32768.0 * 180.0,
+                            Data[2] / 32768.0 * 180.0
+                            )
+                        );
                     break;
                 case 0x54:
                     //Magnet
-                    this.MagnetPacket.X = Data[0];
-                    this.MagnetPacket.Y = Data[1];
-                    this.MagnetPacket.Z = Data[2];
-                    PT = PacketType.Magnet;
+                    this.MagnetDisplay.RedirectPointerTo(
+                        new Vector3D(
+                            Data[0],
+                            Data[1],
+                            Data[2]
+                            )
+                        );
                     break;
                 case 0x55:
                     //PortVoltage
@@ -269,11 +221,6 @@ namespace NineAxises
                     break;
                 default:
                     break;
-            }
-
-            if(PT!= PacketType.Unknown)
-            {
-                this.UpdateDisplays();
             }
         }
 
