@@ -12,16 +12,41 @@ namespace NineAxises
     /// </summary>
     public partial class AxisDisplayerControl : UserControl
     {
-        public string UnitValue = string.Empty;
-        public string UnitAngle = string.Empty;
+        private string unitValue = string.Empty;
+        private string unitAngle = string.Empty;
 
-        public double ScaleFactor = 1.0;
+        private double scaleFactor = 1.0;
+        private double bodyRadius = 1.0;
+        private double bodyThickness = 0.01;
+        private double stickRaidus = 0.02;
+        private double stickLength = 1.2;
+        private int segments = 64;
+
+        private Vector3D lastVector = default(Vector3D);
+
+        private enum Op
+        {
+            None,
+            Rotate,
+            Redirect,
+        }
+        private Op lastOp = Op.None;
 
         public string Title
         {
             get { return this.TitleText.Text; }
-            set { this.TitleText.Text = value ?? string.Empty; }
+            set { this.TitleText.Text = value ?? string.Empty; this.RedoLastOp(); }
         }
+
+        public string UnitValue { get => unitValue; set { unitValue = value; this.RedoLastOp(); } }
+        public string UnitAngle { get => unitAngle; set { unitAngle = value; this.RedoLastOp(); } }
+        public double ScaleFactor { get => scaleFactor; set { scaleFactor = value; this.RedoLastOp(); } }
+
+        public double BodyRadius { get => bodyRadius; set { bodyRadius = value; this.ResizeShapes(); } }
+        public double BodyThickness { get => bodyThickness; set { bodyThickness = value; this.ResizeShapes(); } }
+        public double StickRaidus { get => stickRaidus; set { stickRaidus = value; this.ResizeShapes(); } }
+        public double StickLength { get => stickLength; set { stickLength = value; this.ResizeShapes(); } }
+        public int Segments { get => segments; set { segments = value; this.ResizeShapes(); } }
 
         public AxisDisplayerControl()
         {
@@ -38,6 +63,34 @@ namespace NineAxises
             this.Camera.Position = SelfLocation;
             this.Camera.LookDirection = TargetLocation - SelfLocation;
         }
+
+
+        private void ResizeShapes()
+        {
+            this.Head.Geometry = this.BuildCylinder(this.StickRaidus, this.StickLength, this.Segments);
+            this.Body.Geometry = this.BuildCylinder(this.BodyRadius, this.BodyThickness, this.Segments);
+            this.Tail.Geometry = this.BuildCylinder(this.StickRaidus, -this.StickLength, this.Segments);
+            this.Arm.Geometry = this.BuildCylinder(this.StickRaidus, this.StickLength, this.Segments);
+
+            this.RedoLastOp();
+        }
+        private void RedoLastOp()
+        {
+            if (this.lastOp != Op.None)
+            {
+                switch (this.lastOp)
+                {
+                    case Op.Redirect:
+                        this.RedirectPointerTo(this.lastVector);
+                        break;
+                    case Op.Rotate:
+                        this.RotatePointerTo(this.lastVector);
+                        break;
+                }
+                this.lastOp = Op.None;
+            }
+
+        }
         public virtual void RotatePointerTo(Vector3D V)
         {
             this.RotatePointerTo(V.X, V.Y, V.Z);
@@ -49,6 +102,11 @@ namespace NineAxises
           */
         public virtual void RotatePointerTo(double Roll, double Pitch, double Yaw)
         {
+            this.lastVector.X = Roll;
+            this.lastVector.Y = Pitch;
+            this.lastVector.Z = Yaw;
+            this.lastOp = Op.Rotate;
+
             this.YAxisRotation.Angle = Roll;
             this.ZAxisRotation.Angle = Pitch;
             this.XAxisRotation.Angle = Yaw;
@@ -60,12 +118,16 @@ namespace NineAxises
         }
         public virtual void RedirectPointerTo(Vector3D V)
         {
+            this.lastVector = V;
+
             double D = 0.0;
             double A = 0.0;
             double P = 0.0;
 
             if ((D=V.Length) > 0.0)
             {
+                this.lastOp = Op.Redirect;
+
                 A = Math.Asin(V.Z / D);
                 P = Math.Atan2(V.Y, V.X);
 
@@ -90,10 +152,7 @@ namespace NineAxises
 
         private void UserControl_Initialized(object sender, EventArgs e)
         {
-            this.Head.Geometry = this.BuildCylinder(0.02, 1.2, 100);
-            this.Body.Geometry = this.BuildCylinder(1.0, 0.01, 100);
-            this.Tail.Geometry = this.BuildCylinder(0.02, -1.2, 100);
-
+            this.ResizeShapes();
         }
         protected virtual MeshGeometry3D BuildDisk(double R, double Delta)
         {
@@ -199,7 +258,7 @@ namespace NineAxises
                 TriangleIndices = new Int32Collection(Indices)
             };
         }
-        protected virtual MeshGeometry3D BuildCone(double radius, double height, int segments, double x = 0, double y = 0, double z = 0, bool sideOnly = false)
+        protected virtual MeshGeometry3D BuildCone(double radius, double height, int segments = 64, double x = 0, double y = 0, double z = 0, bool sideOnly = false)
         {
             List<Point3D> Points = new List<Point3D>();
             List<int> Indices = new List<int>();
@@ -239,7 +298,7 @@ namespace NineAxises
                 TriangleIndices = new Int32Collection(Indices)
             };
         }
-        protected virtual MeshGeometry3D BuildCylinder(double radius, double height, int segments, double x = 0, double y = 0, double z = 0, bool sideOnly = false)
+        protected virtual MeshGeometry3D BuildCylinder(double radius, double height, int segments = 64, double x = 0, double y = 0, double z = 0, bool sideOnly = false)
         {
             List<Point3D> Points = new List<Point3D>();
             List<int> Indices = new List<int>();
@@ -292,7 +351,7 @@ namespace NineAxises
                 TriangleIndices = new Int32Collection(Indices)
             };
         }
-        protected virtual MeshGeometry3D BuildHalfCone(double radiusBottom, double radiusTop, double height, int segments, double x = 0, double y = 0, double z = 0, bool sideOnly = false)
+        protected virtual MeshGeometry3D BuildHalfCone(double radiusBottom, double radiusTop, double height, int segments = 64, double x = 0, double y = 0, double z = 0, bool sideOnly = false)
         {
             List<Point3D> Points = new List<Point3D>();
 
@@ -349,7 +408,7 @@ namespace NineAxises
                 TriangleIndices = new Int32Collection(Indices)
             };
         }
-        protected virtual MeshGeometry3D BuildSphere(double radius, int segments, double x = 0.0, double y = 0.0, double z = 0.0)
+        protected virtual MeshGeometry3D BuildSphere(double radius, int segments = 64, double x = 0.0, double y = 0.0, double z = 0.0)
         {
             List<Point3D> Points = new List<Point3D>();
 

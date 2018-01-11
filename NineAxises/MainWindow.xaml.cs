@@ -35,10 +35,15 @@ namespace NineAxises
 
         private void Window_Initialized(object sender, EventArgs e)
         {
-            this.GravityDisplay.TitleText.Text = "Gravity Field";
-            this.MagnetDisplay.TitleText.Text = "Magnet Field";
-            this.AngleSpeedDisplay.TitleText.Text = "Angle Speed";
-            this.AngleValueDisplay.TitleText.Text = "Angle Value";
+            this.GravityDisplay.Title = "Gravity Field";
+            this.MagnetDisplay.Title = "Magnet Field";
+            this.AngleSpeedDisplay.Title = "Angle Speed";
+            this.AngleValueDisplay.Title = "Angle Value";
+
+            this.GravityDisplay.ScaleFactor = 1.0/16.0;
+            this.MagnetDisplay.ScaleFactor = 1.0 / 1000.0;
+            this.AngleSpeedDisplay.ScaleFactor = 1.0 / 180.0;
+            this.AngleValueDisplay.ScaleFactor = 1.0 / 180.0;
 
             this.GravityDisplay.UnitAngle
                 = this.MagnetDisplay.UnitAngle
