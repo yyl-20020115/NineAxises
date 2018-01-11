@@ -23,7 +23,7 @@ namespace NineAxises
         private double bodyRadius = 1.0;
         private double bodyThickness = 0.01;
         private double stickRaidus = 0.02;
-        private double stickLength = 1.2;
+        private double stickLength = 1.0;
         private int segments = 64;
 
         private Vector3D lastVector = default(Vector3D);
@@ -53,7 +53,7 @@ namespace NineAxises
         public double StickLength { get => stickLength; set { stickLength = value; this.BuildParts(); } }
         public int Segments { get => segments; set { segments = value; this.BuildParts(); } }
 
-        public Vector3D ZeroVector { get => zeroVector; set => zeroVector = value; }
+        public Vector3D ZeroVector { get => zeroVector; set { zeroVector = value; } }
 
         public AxisDisplayerControl()
         {
@@ -110,12 +110,14 @@ namespace NineAxises
             this.lastVector.X = Roll;
             this.lastVector.Y = Pitch;
             this.lastVector.Z = Yaw;
-            this.lastVector -= this.zeroVector;
+
             this.lastOp = Op.Rotate;
 
-            this.YAxisRotation.Angle = this.lastVector.X;
-            this.ZAxisRotation.Angle = this.lastVector.Y;
-            this.XAxisRotation.Angle = this.lastVector.Z;
+            Vector3D N = this.lastVector - this.zeroVector;
+
+            this.YAxisRotation.Angle = N.Y;
+            this.ZAxisRotation.Angle = N.Z;
+            this.XAxisRotation.Angle = N.X;
 
             this.UpdateAsRotate();
         }
@@ -128,23 +130,34 @@ namespace NineAxises
         }
         public virtual void RedirectPointerTo(Vector3D V)
         {
-            this.lastVector = V - this.zeroVector;
+            Vector3D N = (this.lastVector = V) - this.zeroVector;
 
-            if ((D= this.lastVector.Length) > 0.0)
+            if ((D = N.Length) > 0.0)
             {
                 this.lastOp = Op.Redirect;
 
-                A = Math.Asin(this.lastVector.Z / D);
-                P = Math.Atan2(this.lastVector.Y, this.lastVector.X);
+                A = Math.Acos(N.Z / D);
+                P = Math.Atan2(N.Y, N.X);
 
-                //No XAxisRotation needed
-                this.YAxisRotation.Angle = A * 180.0 / Math.PI;
-                this.ZAxisRotation.Angle = P * 180.0 / Math.PI;
+                var M = Matrix3D.Identity;
 
-                this.HeadLengthScale.ScaleZ 
-                    = this.TailLengthScale.ScaleZ 
-                    = D * this.ScaleFactor;
+                M.Rotate(new Quaternion(new Vector3D(0.0, 1.0, 0.0), A * 180.0 / Math.PI));
+                M.Rotate(new Quaternion(new Vector3D(0.0, 0.0, 1.0), P * 180.0 / Math.PI));
 
+                this.Mat.Matrix = M;
+
+                if (!double.IsNaN(this.scaleFactor))
+                {
+                    this.HeadLengthScale.ScaleZ
+                    = this.TailLengthScale.ScaleZ
+                    = D * this.scaleFactor;
+                }
+            }
+            else
+            {
+                this.D = 0.0;
+                this.A = 0.0;
+                this.P = 0.0;
             }
             this.UpdateAsRedirect();
         }
@@ -466,14 +479,12 @@ namespace NineAxises
 
         private void ZeroCheckBox_Checked(object sender, System.Windows.RoutedEventArgs e)
         {
-            if (this.ZeroCheckBox.IsChecked.GetValueOrDefault(false))
-            {
-                this.ZeroVector = this.lastVector;
-            }
-            else
-            {
-                this.ZeroVector = default(Vector3D);
-            }
+            this.ZeroVector = this.lastVector;
+        }
+
+        private void ZeroCheckBox_Unchecked(object sender, System.Windows.RoutedEventArgs e)
+        {
+            this.ZeroVector = default(Vector3D);
         }
     }
 }

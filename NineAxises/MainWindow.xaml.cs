@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Linq;
 using System.Threading;
 using System.Windows.Media.Media3D;
+using System.ComponentModel;
 
 namespace NineAxises
 {
@@ -26,7 +27,8 @@ namespace NineAxises
 
         private int usRxLength = 0;
 
-        private ManualResetEvent MRE = new ManualResetEvent(false);
+        private bool closing = false;
+        private bool closed = false;
 
         public MainWindow()
         {
@@ -40,8 +42,9 @@ namespace NineAxises
             this.AngleSpeedDisplay.Title = "Angle Speed";
             this.AngleValueDisplay.Title = "Angle Value";
 
-            this.GravityDisplay.ScaleFactor = 1.0 / 16.0;
+            this.GravityDisplay.ScaleFactor = 1.0;
             this.MagnetDisplay.ScaleFactor = 1.0 / 1000.0;
+            this.AngleSpeedDisplay.ScaleFactor = double.NaN;
 
             this.GravityDisplay.UnitAngle
                 = this.MagnetDisplay.UnitAngle
@@ -50,7 +53,7 @@ namespace NineAxises
                 = "°";
 
             this.GravityDisplay.UnitValue = "g";
-            this.MagnetDisplay.UnitValue = "mG";
+            this.MagnetDisplay.UnitValue = "uT";
             this.AngleSpeedDisplay.UnitValue = "°/s";
             this.AngleValueDisplay.UnitValue = "°";
             this.AngleValueDisplay.DValueText.Visibility = Visibility.Hidden;
@@ -64,10 +67,10 @@ namespace NineAxises
             this.RebuildMainMenu();
         }
 
-        protected override void OnClosed(EventArgs e)
+        protected override void OnClosing(CancelEventArgs e)
         {
             this.CloseComPort();
-            base.OnClosed(e);
+            base.OnClosing(e);
         }
 
         private void SelectComPort(MenuItem m)
@@ -99,51 +102,57 @@ namespace NineAxises
                     {
                         m.IsChecked = false;
                     }
-
                 }
             }
         }
 
         private void Port_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
-            byte[] buffer = new byte[4096];
-
-            try
+            if (!this.closing)
             {
-                int usLength = this.Port.Read(RxBuffer, usRxLength, buffer.Length);
+                byte[] buffer = new byte[4096];
 
-                usRxLength += usLength;
-
-                while (usRxLength >= 11)
+                try
                 {
-                    UpdateData Update = new UpdateData(DecodeDataAndUpdate);
+                    int usLength = this.Port.Read(RxBuffer, usRxLength, buffer.Length - usRxLength);
 
-                    RxBuffer.CopyTo(buffer, 0);
+                    usRxLength += usLength;
 
-                    if (!((buffer[0] == 0x55) & ((buffer[1] & 0x50) == 0x50)))
+                    while (usRxLength >= 11)
                     {
-                        for (int i = 1; i < usRxLength; i++)
+                        UpdateData Update = new UpdateData(DecodeDataAndUpdate);
+
+                        RxBuffer.CopyTo(buffer, 0);
+
+                        if (!((buffer[0] == 0x55) & ((buffer[1] & 0x50) == 0x50)))
                         {
-                            RxBuffer[i - 1] = RxBuffer[i];
+                            for (int i = 1; i < usRxLength; i++)
+                            {
+                                RxBuffer[i - 1] = RxBuffer[i];
+                            }
+                            usRxLength--;
+                            continue;
                         }
-                        usRxLength--;
-                        continue;
+                        if (((buffer[0] + buffer[1] + buffer[2] + buffer[3] + buffer[4] + buffer[5] + buffer[6] + buffer[7] + buffer[8] + buffer[9]) & 0xff)
+                            == buffer[10])
+                        {
+                            Dispatcher.Invoke(Update,TimeSpan.FromMilliseconds(100), buffer);
+                        }
+                        for (int i = 11; i < usRxLength; i++)
+                        {
+                            RxBuffer[i - 11] = RxBuffer[i];
+                        }
+                        usRxLength -= 11;
                     }
-                    if (((buffer[0] + buffer[1] + buffer[2] + buffer[3] + buffer[4] + buffer[5] + buffer[6] + buffer[7] + buffer[8] + buffer[9]) & 0xff)
-                        == buffer[10])
-                    {
-                        Dispatcher.Invoke(Update, buffer);
-                    }
-                    for (int i = 11; i < usRxLength; i++)
-                    {
-                        RxBuffer[i - 11] = RxBuffer[i];
-                    }
-                    usRxLength -= 11;
+                }
+                catch
+                {
+
                 }
             }
-            finally
+            else
             {
-                this.MRE.Set();
+                this.closed = true;
             }
         }
 
@@ -184,7 +193,7 @@ namespace NineAxises
                     break;
                 case 0x53:
                     //AngleValue
-                    this.AngleValueDisplay.RedirectPointerTo(
+                    this.AngleValueDisplay.RotatePointerTo(
                         new Vector3D(
                             Data[0] / 32768.0 * 180.0,
                             Data[1] / 32768.0 * 180.0,
@@ -196,9 +205,9 @@ namespace NineAxises
                     //Magnet
                     this.MagnetDisplay.RedirectPointerTo(
                         new Vector3D(
-                            Data[0],
-                            Data[1],
-                            Data[2]
+                            Data[0] / 32768.0 * 1200.0 * 2.0,
+                            Data[1] / 32768.0 * 1200.0 * 2.0,
+                            Data[2] / 32768.0 * 1200.0 * 2.0
                             )
                         );
                     break;
@@ -232,17 +241,17 @@ namespace NineAxises
         {
             if (this.Port != null)
             {
-                if (this.Port.IsOpen)
+                this.closing = true;
+
+                while (!this.closed)
                 {
-                    this.Port.Close();
+                    Thread.Sleep(10);
                 }
-
-                this.MRE.WaitOne();
-
                 this.Port.Dispose();
                 this.Port = null;
-            }
-            this.PortName = string.Empty;
+                this.closing = false;
+           }
+           this.PortName = string.Empty;
         }
 
         private void ClearMainMenuItemChecks()
@@ -255,18 +264,49 @@ namespace NineAxises
                 }
             }
         }
+
+        private class ComNameComparer : StringComparer
+        {
+            public override int Compare(string x, string y)
+            {
+                return this.TryParseNumber(x) - this.TryParseNumber(y);
+            }
+
+            public override bool Equals(string x, string y)
+            {
+                return this.TryParseNumber(x) == this.TryParseNumber(y);
+            }
+
+            public override int GetHashCode(string obj)
+            {
+                return obj != null ? this.TryParseNumber(obj) : 0;
+            }
+
+            private int TryParseNumber(string name)
+            {
+                int n = -1;
+                if(!string.IsNullOrEmpty(name)&& name.Length > 3)
+                {
+                    if(int.TryParse(name.Substring(3),out n))
+                    {
+                        
+                    }
+                }
+                return n;
+            }
+        }
         private void RebuildMainMenu()
         {
-            var ExitMenuItem = new MenuItem() { Header = "Exit" };
+            var ExitMenuItem = new MenuItem() { Header = "E_xit" };
             ExitMenuItem.Click += ExitMenuItem_Click;
-            var RefreshMenuItem = new MenuItem() { Header = "Refresh" };
+            var RefreshMenuItem = new MenuItem() { Header = "_Refresh" };
             RefreshMenuItem.Click += RefreshMenuItem_Click;
-            var CloseMenuItem = new MenuItem() { Header = "Close" };
+            var CloseMenuItem = new MenuItem() { Header = "_Close" };
             CloseMenuItem.Click += CloseMenuItem_Click;
             this.MainMenu.Items.Clear();
             List<string> Names = new List<string>(SerialPort.GetPortNames());
 
-            Names.Sort();
+            Names.Sort(new ComNameComparer());
 
             foreach (string PN in Names)
             {

@@ -21,7 +21,7 @@
                 <ColumnDefinition/>
                 <ColumnDefinition Width="60"/>
             </Grid.ColumnDefinitions>
-            <CheckBox x:Name="ZeroCheckBox" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="0" Grid.Column="2" Checked="ZeroCheckBox_Checked">Zero</CheckBox>
+            <CheckBox x:Name="ZeroCheckBox" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="0" Grid.Column="2" Unchecked="ZeroCheckBox_Unchecked" Checked="ZeroCheckBox_Checked">Zero</CheckBox>
             <TextBlock x:Name="TitleText" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">Title</TextBlock>
             <TextBlock x:Name="XValueText" Grid.Row="1" Grid.Column="0">X:</TextBlock>
             <TextBlock x:Name="YValueText" Grid.Row="2" Grid.Column="0">Y:</TextBlock>
@@ -31,7 +31,7 @@
             <TextBlock x:Name="PValueText" Grid.Row="3" Grid.Column="1">P:</TextBlock>
             <Viewport3D Name="Canvas" Grid.Row="5" Grid.ColumnSpan="3">
                 <Viewport3D.Camera>
-                    <PerspectiveCamera x:Name="Camera" Position="-8,8,8" LookDirection="8,-8,-8"/>
+                    <PerspectiveCamera x:Name="Camera" Position="4,0,0" LookDirection="-1,0,0" UpDirection="0,0,1"/>
                 </Viewport3D.Camera>
                 <ModelVisual3D >
                     <ModelVisual3D.Content >
@@ -65,7 +65,7 @@
                                     <GeometryModel3D.Material>
                                         <DiffuseMaterial>
                                             <DiffuseMaterial.Brush>
-                                                <SolidColorBrush Color="Green" Opacity="0.8" />
+                                                <SolidColorBrush Color="Blue" Opacity="0.8" />
                                             </DiffuseMaterial.Brush>
                                         </DiffuseMaterial>
                                     </GeometryModel3D.Material>
@@ -110,7 +110,7 @@
                                     <GeometryModel3D.Material>
                                         <DiffuseMaterial>
                                             <DiffuseMaterial.Brush>
-                                                <SolidColorBrush Color="Blue" Opacity="1.0" />
+                                                <SolidColorBrush Color="Green" Opacity="1.0" />
                                             </DiffuseMaterial.Brush>
                                         </DiffuseMaterial>
                                     </GeometryModel3D.Material>
@@ -130,10 +130,10 @@
                     </ModelVisual3D.Children>
                     <ModelVisual3D.Transform>
                         <Transform3DGroup>
-                            <MatrixTransform3D/>
+                            <MatrixTransform3D x:Name="Mat"/>
                             <RotateTransform3D>
                                 <RotateTransform3D.Rotation >
-                                    <AxisAngleRotation3D Angle="0" Axis="1,0,0" x:Name="XAxisRotation"/>
+                                    <AxisAngleRotation3D Angle="0" Axis="0,0,1" x:Name="ZAxisRotation"/>
                                 </RotateTransform3D.Rotation>
                             </RotateTransform3D>
                             <RotateTransform3D >
@@ -143,7 +143,7 @@
                             </RotateTransform3D>
                             <RotateTransform3D >
                                 <RotateTransform3D.Rotation>
-                                    <AxisAngleRotation3D Angle="0" Axis="0,0,1" x:Name="ZAxisRotation"/>
+                                    <AxisAngleRotation3D Angle="0" Axis="1,0,0" x:Name="XAxisRotation"/>
                                 </RotateTransform3D.Rotation>
                             </RotateTransform3D>
                         </Transform3DGroup>

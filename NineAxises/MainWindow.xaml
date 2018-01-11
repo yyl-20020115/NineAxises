@@ -17,7 +17,7 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
         <Menu Grid.Row="0" Grid.ColumnSpan="2">
-            <MenuItem x:Name="MainMenu"  Header="File"/>
+            <MenuItem x:Name="MainMenu"  Header="_File"/>
         </Menu>
         <local:AxisDisplayerControl Grid.Row="1" Grid.Column="0" x:Name="GravityDisplay" />
         <local:AxisDisplayerControl Grid.Row="1" Grid.Column="1" x:Name="MagnetDisplay"/>
