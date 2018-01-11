@@ -21,8 +21,8 @@
                 <ColumnDefinition/>
                 <ColumnDefinition Width="60"/>
             </Grid.ColumnDefinitions>
-            <CheckBox x:Name="ZeroCheckBox" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="0" Grid.Column="2" Checked="ZeroCheckBox_Checked">Zero</CheckBox>
-            <TextBlock x:Name="TitleText" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">Title</TextBlock>
+            <CheckBox x:Name="ZeroCheckBox" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="0" Grid.Column="2" Checked="ZeroCheckBox_Checked">Zero</CheckBox>
+            <TextBlock x:Name="TitleText" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">Title</TextBlock>
             <TextBlock x:Name="XValueText" Grid.Row="1" Grid.Column="0">X:</TextBlock>
             <TextBlock x:Name="YValueText" Grid.Row="2" Grid.Column="0">Y:</TextBlock>
             <TextBlock x:Name="ZValueText" Grid.Row="3" Grid.Column="0">Z:</TextBlock>
