@@ -15,6 +15,10 @@ namespace NineAxises
         private string unitValue = string.Empty;
         private string unitAngle = string.Empty;
 
+        private double D = 0.0;
+        private double A = 0.0;
+        private double P = 0.0;
+
         private double scaleFactor = 1.0;
         private double bodyRadius = 1.0;
         private double bodyThickness = 0.01;
@@ -35,18 +39,18 @@ namespace NineAxises
         public string Title
         {
             get { return this.TitleText.Text; }
-            set { this.TitleText.Text = value ?? string.Empty; this.RedoLastOp(); }
+            set { this.TitleText.Text = value ?? string.Empty;}
         }
 
-        public string UnitValue { get => unitValue; set { unitValue = value; this.RedoLastOp(); } }
-        public string UnitAngle { get => unitAngle; set { unitAngle = value; this.RedoLastOp(); } }
-        public double ScaleFactor { get => scaleFactor; set { scaleFactor = value; this.RedoLastOp(); } }
+        public string UnitValue { get => unitValue; set { unitValue = value; this.UpdateLastOp(); } }
+        public string UnitAngle { get => unitAngle; set { unitAngle = value; this.UpdateLastOp(); } }
+        public double ScaleFactor { get => scaleFactor; set { scaleFactor = value; this.BuildParts();  } }
 
-        public double BodyRadius { get => bodyRadius; set { bodyRadius = value; this.ResizeShapes(); } }
-        public double BodyThickness { get => bodyThickness; set { bodyThickness = value; this.ResizeShapes(); } }
-        public double StickRaidus { get => stickRaidus; set { stickRaidus = value; this.ResizeShapes(); } }
-        public double StickLength { get => stickLength; set { stickLength = value; this.ResizeShapes(); } }
-        public int Segments { get => segments; set { segments = value; this.ResizeShapes(); } }
+        public double BodyRadius { get => bodyRadius; set { bodyRadius = value; this.BuildParts(); } }
+        public double BodyThickness { get => bodyThickness; set { bodyThickness = value; this.BuildParts(); } }
+        public double StickRaidus { get => stickRaidus; set { stickRaidus = value; this.BuildParts(); } }
+        public double StickLength { get => stickLength; set { stickLength = value; this.BuildParts(); } }
+        public int Segments { get => segments; set { segments = value; this.BuildParts(); } }
 
         public AxisDisplayerControl()
         {
@@ -65,26 +69,24 @@ namespace NineAxises
         }
 
 
-        private void ResizeShapes()
+        private void BuildParts()
         {
             this.Head.Geometry = this.BuildCylinder(this.StickRaidus, this.StickLength, this.Segments);
             this.Body.Geometry = this.BuildCylinder(this.BodyRadius, this.BodyThickness, this.Segments);
             this.Tail.Geometry = this.BuildCylinder(this.StickRaidus, -this.StickLength, this.Segments);
             this.Arm.Geometry = this.BuildCylinder(this.StickRaidus, this.StickLength, this.Segments);
-
-            this.RedoLastOp();
         }
-        private void RedoLastOp()
+        private void UpdateLastOp()
         {
             if (this.lastOp != Op.None)
             {
                 switch (this.lastOp)
                 {
                     case Op.Redirect:
-                        this.RedirectPointerTo(this.lastVector);
+                        this.UpdateAsRedirect();
                         break;
                     case Op.Rotate:
-                        this.RotatePointerTo(this.lastVector);
+                        this.UpdateAsRotate();
                         break;
                 }
                 this.lastOp = Op.None;
@@ -111,18 +113,18 @@ namespace NineAxises
             this.ZAxisRotation.Angle = Pitch;
             this.XAxisRotation.Angle = Yaw;
 
-            this.XValueText.Text = string.Format("Roll:  {0}{1}", Roll,this.UnitAngle);
-            this.YValueText.Text = string.Format("Pitch: {0}{1}", Pitch, this.UnitAngle);
-            this.ZValueText.Text = string.Format("Yaw:   {0}{1}", Yaw, this.UnitAngle);
+            this.UpdateAsRotate();
+        }
+        protected void UpdateAsRotate()
+        {
+            this.XValueText.Text = string.Format("Roll:  {0}{1}", this.lastVector.X, this.UnitAngle);
+            this.YValueText.Text = string.Format("Pitch: {0}{1}", this.lastVector.Y, this.UnitAngle);
+            this.ZValueText.Text = string.Format("Yaw:   {0}{1}", this.lastVector.Z, this.UnitAngle);
             this.DValueText.Text = string.Empty;
         }
         public virtual void RedirectPointerTo(Vector3D V)
         {
             this.lastVector = V;
-
-            double D = 0.0;
-            double A = 0.0;
-            double P = 0.0;
 
             if ((D=V.Length) > 0.0)
             {
@@ -140,19 +142,21 @@ namespace NineAxises
                     = D * this.ScaleFactor;
 
             }
-
-            this.XValueText.Text = string.Format("X: {0}{1}", V.X, this.UnitValue);
-            this.YValueText.Text = string.Format("Y: {0}{1}", V.Y, this.UnitValue);
-            this.ZValueText.Text = string.Format("Z: {0}{1}", V.Z, this.UnitValue);
+            this.UpdateAsRedirect();
+        }
+        private void UpdateAsRedirect()
+        {
+            this.XValueText.Text = string.Format("X: {0}{1}", this.lastVector.X, this.UnitValue);
+            this.YValueText.Text = string.Format("Y: {0}{1}", this.lastVector.Y, this.UnitValue);
+            this.ZValueText.Text = string.Format("Z: {0}{1}", this.lastVector.Z, this.UnitValue);
             this.DValueText.Text = string.Format("D: {0}{1}", D, this.UnitValue);
             this.AValueText.Text = string.Format("A: {0}{1}", A, this.UnitAngle);
             this.PValueText.Text = string.Format("P: {0}{1}", P, this.UnitAngle);
 
         }
-
         private void UserControl_Initialized(object sender, EventArgs e)
         {
-            this.ResizeShapes();
+            this.BuildParts();
         }
         protected virtual MeshGeometry3D BuildDisk(double R, double Delta)
         {
