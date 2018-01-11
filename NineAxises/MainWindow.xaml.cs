@@ -40,10 +40,8 @@ namespace NineAxises
             this.AngleSpeedDisplay.Title = "Angle Speed";
             this.AngleValueDisplay.Title = "Angle Value";
 
-            this.GravityDisplay.ScaleFactor = 1.0/16.0;
+            this.GravityDisplay.ScaleFactor = 1.0 / 16.0;
             this.MagnetDisplay.ScaleFactor = 1.0 / 1000.0;
-            this.AngleSpeedDisplay.ScaleFactor = 1.0 / 180.0;
-            this.AngleValueDisplay.ScaleFactor = 1.0 / 180.0;
 
             this.GravityDisplay.UnitAngle
                 = this.MagnetDisplay.UnitAngle
@@ -74,12 +72,12 @@ namespace NineAxises
 
         private void SelectComPort(MenuItem m)
         {
-            if (m!=null && m.Header.ToString() != this.PortName)
+            if (m != null && m.Header.ToString() != this.PortName)
             {
                 this.CloseComPort();
                 try
                 {
-                    this.Port = new SerialPort(this.PortName = m.Header.ToString(), 
+                    this.Port = new SerialPort(this.PortName = m.Header.ToString(),
                         DefaultBaudRate);
                     this.Port.DataReceived += Port_DataReceived;
                     this.Port.Open();
@@ -101,7 +99,7 @@ namespace NineAxises
                     {
                         m.IsChecked = false;
                     }
-                     
+
                 }
             }
         }
@@ -158,7 +156,7 @@ namespace NineAxises
             Data[1] = BitConverter.ToInt16(buffer, 4);
             Data[2] = BitConverter.ToInt16(buffer, 6);
             Data[3] = BitConverter.ToInt16(buffer, 8);
-           
+
             switch (buffer[1])
             {
                 case 0x50:
@@ -168,8 +166,8 @@ namespace NineAxises
                     //Gravity
                     this.GravityDisplay.RedirectPointerTo(
                         new Vector3D(
-                            Data[0] / 32768.0 * 16.0, 
-                            Data[1] / 32768.0 * 16.0, 
+                            Data[0] / 32768.0 * 16.0,
+                            Data[1] / 32768.0 * 16.0,
                             Data[2] / 32768.0 * 16.0
                             )
                         );
@@ -178,8 +176,8 @@ namespace NineAxises
                     //AngleSpeed
                     this.AngleSpeedDisplay.RedirectPointerTo(
                         new Vector3D(
-                            Data[0] / 32768.0 * 2000.0, 
-                            Data[1] / 32768.0 * 2000.0, 
+                            Data[0] / 32768.0 * 2000.0,
+                            Data[1] / 32768.0 * 2000.0,
                             Data[2] / 32768.0 * 2000.0
                             )
                         );
@@ -299,9 +297,9 @@ namespace NineAxises
 
         private void PortMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            if(sender is MenuItem m)
+            if (sender is MenuItem m)
             {
-                if(m.Header.ToString() != this.PortName)
+                if (m.Header.ToString() != this.PortName)
                 {
                     //change port
                     this.SelectComPort(m);

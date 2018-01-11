@@ -27,6 +27,7 @@ namespace NineAxises
         private int segments = 64;
 
         private Vector3D lastVector = default(Vector3D);
+        private Vector3D zeroVector = default(Vector3D);
 
         private enum Op
         {
@@ -51,6 +52,8 @@ namespace NineAxises
         public double StickRaidus { get => stickRaidus; set { stickRaidus = value; this.BuildParts(); } }
         public double StickLength { get => stickLength; set { stickLength = value; this.BuildParts(); } }
         public int Segments { get => segments; set { segments = value; this.BuildParts(); } }
+
+        public Vector3D ZeroVector { get => zeroVector; set => zeroVector = value; }
 
         public AxisDisplayerControl()
         {
@@ -107,11 +110,12 @@ namespace NineAxises
             this.lastVector.X = Roll;
             this.lastVector.Y = Pitch;
             this.lastVector.Z = Yaw;
+            this.lastVector -= this.zeroVector;
             this.lastOp = Op.Rotate;
 
-            this.YAxisRotation.Angle = Roll;
-            this.ZAxisRotation.Angle = Pitch;
-            this.XAxisRotation.Angle = Yaw;
+            this.YAxisRotation.Angle = this.lastVector.X;
+            this.ZAxisRotation.Angle = this.lastVector.Y;
+            this.XAxisRotation.Angle = this.lastVector.Z;
 
             this.UpdateAsRotate();
         }
@@ -124,14 +128,14 @@ namespace NineAxises
         }
         public virtual void RedirectPointerTo(Vector3D V)
         {
-            this.lastVector = V;
+            this.lastVector = V - this.zeroVector;
 
-            if ((D=V.Length) > 0.0)
+            if ((D= this.lastVector.Length) > 0.0)
             {
                 this.lastOp = Op.Redirect;
 
-                A = Math.Asin(V.Z / D);
-                P = Math.Atan2(V.Y, V.X);
+                A = Math.Asin(this.lastVector.Z / D);
+                P = Math.Atan2(this.lastVector.Y, this.lastVector.X);
 
                 //No XAxisRotation needed
                 this.YAxisRotation.Angle = A * 180.0 / Math.PI;
@@ -458,6 +462,18 @@ namespace NineAxises
                 Positions = new Point3DCollection(Points),
                 TriangleIndices = new Int32Collection(Indices)
             };
+        }
+
+        private void ZeroCheckBox_Checked(object sender, System.Windows.RoutedEventArgs e)
+        {
+            if (this.ZeroCheckBox.IsChecked.GetValueOrDefault(false))
+            {
+                this.ZeroVector = this.lastVector;
+            }
+            else
+            {
+                this.ZeroVector = default(Vector3D);
+            }
         }
     }
 }
