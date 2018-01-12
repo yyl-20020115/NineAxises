@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO.Ports;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
-using System.Linq;
-using System.Threading;
 using System.Windows.Media.Media3D;
-using System.ComponentModel;
 
 namespace NineAxises
 {
@@ -16,6 +15,9 @@ namespace NineAxises
     public partial class MainWindow : Window
     {
         private const int DefaultBaudRate = 115200;
+        private const int DefaultUIDelayTimeMs = 25;
+        private const int MessageLength = 11;
+        private const int RxBufferLength = MessageLength<<1;
 
         private string PortName = string.Empty;
 
@@ -23,7 +25,7 @@ namespace NineAxises
 
         private delegate void UpdateData(byte[] byteData);
 
-        private byte[] RxBuffer = new byte[4096];
+        private byte[] RxBuffer = new byte[RxBufferLength];
 
         private int usRxLength = 0;
 
@@ -82,6 +84,7 @@ namespace NineAxises
                 {
                     this.Port = new SerialPort(this.PortName = m.Header.ToString(),
                         DefaultBaudRate);
+                    this.Port.ReceivedBytesThreshold = RxBufferLength;
                     this.Port.DataReceived += Port_DataReceived;
                     this.Port.Open();
 
@@ -110,21 +113,21 @@ namespace NineAxises
         {
             if (!this.closing)
             {
-                byte[] buffer = new byte[4096];
+                byte[] RmBuffer = new byte[RxBufferLength];
 
                 try
                 {
-                    int usLength = this.Port.Read(RxBuffer, usRxLength, buffer.Length - usRxLength);
+                    
+                    int usLength = this.Port.Read(RxBuffer, usRxLength, this.Port.BytesToRead);
 
                     usRxLength += usLength;
 
-                    while (usRxLength >= 11)
+                    while (usRxLength >= MessageLength)
                     {
-                        UpdateData Update = new UpdateData(DecodeDataAndUpdate);
+                    
+                        RxBuffer.CopyTo(RmBuffer, 0);
 
-                        RxBuffer.CopyTo(buffer, 0);
-
-                        if (!((buffer[0] == 0x55) & ((buffer[1] & 0x50) == 0x50)))
+                        if (!((RmBuffer[0] == 0x55) & ((RmBuffer[1] & 0x50) == 0x50)))
                         {
                             for (int i = 1; i < usRxLength; i++)
                             {
@@ -133,16 +136,22 @@ namespace NineAxises
                             usRxLength--;
                             continue;
                         }
-                        if (((buffer[0] + buffer[1] + buffer[2] + buffer[3] + buffer[4] + buffer[5] + buffer[6] + buffer[7] + buffer[8] + buffer[9]) & 0xff)
-                            == buffer[10])
+                        if (((RmBuffer[0] + RmBuffer[1] + RmBuffer[2] + RmBuffer[3] + RmBuffer[4] + RmBuffer[5] + RmBuffer[6] + RmBuffer[7] + RmBuffer[8] + RmBuffer[9]) & 0xff)
+                            == RmBuffer[10])
                         {
-                            Dispatcher.Invoke(Update,TimeSpan.FromMilliseconds(100), buffer);
+                            Dispatcher.Invoke(
+                                new UpdateData(this.DecodeDataAndUpdate),
+                                TimeSpan.FromMilliseconds(
+                                    DefaultUIDelayTimeMs
+                                    ),
+                                RmBuffer
+                                );
                         }
-                        for (int i = 11; i < usRxLength; i++)
+                        for (int i = MessageLength; i < usRxLength; i++)
                         {
-                            RxBuffer[i - 11] = RxBuffer[i];
+                            RxBuffer[i - MessageLength] = RxBuffer[i];
                         }
-                        usRxLength -= 11;
+                        usRxLength -= MessageLength;
                     }
                 }
                 catch
