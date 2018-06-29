@@ -93,7 +93,7 @@ namespace NineAxises
                         m.IsChecked = true;
                     }
                 }
-                catch
+                catch(Exception ex)
                 {
                     if (this.Port != null)
                     {
@@ -113,12 +113,15 @@ namespace NineAxises
         {
             if (!this.closing)
             {
+                //115200bps = 11520Bps = 11*1Ksps
                 byte[] RmBuffer = new byte[RxBufferLength];
 
                 try
                 {
-                    
-                    int usLength = this.Port.Read(RxBuffer, usRxLength, this.Port.BytesToRead);
+                    int DeltaLength = RxBufferLength - usRxLength;
+                    int ReadLength = this.Port.BytesToRead > DeltaLength ? DeltaLength : this.Port.BytesToRead;
+
+                    int usLength = this.Port.Read(RxBuffer, usRxLength, ReadLength);
 
                     usRxLength += usLength;
 
@@ -154,9 +157,9 @@ namespace NineAxises
                         usRxLength -= MessageLength;
                     }
                 }
-                catch
+                catch(Exception ex)
                 {
-
+                    string t = ex.Message;
                 }
             }
             else
@@ -256,10 +259,16 @@ namespace NineAxises
                 {
                     Thread.Sleep(10);
                 }
-                this.Port.Dispose();
-                this.Port = null;
-                this.closing = false;
-           }
+                try
+                {
+                    this.Port.Dispose();
+                }
+                finally
+                {
+                    this.Port = null;
+                    this.closing = false;
+                }
+            }
            this.PortName = string.Empty;
         }
 

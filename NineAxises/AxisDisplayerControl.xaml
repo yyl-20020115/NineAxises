@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:NineAxises"
              mc:Ignorable="d" 
-             d:DesignHeight="300" d:DesignWidth="300" Initialized="UserControl_Initialized">
+             d:DesignHeight="300" d:DesignWidth="300" Initialized="UserControl_Initialized" FontFamily="Consolas" FontSize="16">
     <Border BorderBrush="Blue" BorderThickness="2" Padding="4">
         <Grid>
 
@@ -14,6 +14,7 @@
                 <RowDefinition Height="20" />
                 <RowDefinition Height="20" />
                 <RowDefinition Height="20" />
+                <RowDefinition Height="60" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
@@ -22,6 +23,7 @@
                 <ColumnDefinition Width="60"/>
             </Grid.ColumnDefinitions>
             <CheckBox x:Name="ZeroCheckBox" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="0" Grid.Column="2" Unchecked="ZeroCheckBox_Unchecked" Checked="ZeroCheckBox_Checked">Zero</CheckBox>
+            <CheckBox x:Name="XYZCheckBox" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" Grid.Column="2" Unchecked="XYZCheckBox_Unchecked" Checked="XYZCheckBox_Checked">+XYZ</CheckBox>
             <TextBlock x:Name="TitleText" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">Title</TextBlock>
             <TextBlock x:Name="XValueText" Grid.Row="1" Grid.Column="0">X:</TextBlock>
             <TextBlock x:Name="YValueText" Grid.Row="2" Grid.Column="0">Y:</TextBlock>
@@ -29,6 +31,7 @@
             <TextBlock x:Name="DValueText" Grid.Row="1" Grid.Column="1">D:</TextBlock>
             <TextBlock x:Name="AValueText" Grid.Row="2" Grid.Column="1">A:</TextBlock>
             <TextBlock x:Name="PValueText" Grid.Row="3" Grid.Column="1">P:</TextBlock>
+            <local:DrawCanvas x:Name="CurveCanvas" Grid.Row="4" Grid.Column="1"></local:DrawCanvas>
             <Viewport3D Name="Canvas" Grid.Row="5" Grid.ColumnSpan="3">
                 <Viewport3D.Camera>
                     <PerspectiveCamera x:Name="Camera" Position="4,0,0" LookDirection="-1,0,0" UpDirection="0,0,1"/>

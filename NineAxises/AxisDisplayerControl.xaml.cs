@@ -42,7 +42,7 @@ namespace NineAxises
             get { return this.TitleText.Text; }
             set { this.TitleText.Text = value ?? string.Empty;}
         }
-
+        public bool IsXYZChecked => this.XYZCheckBox.IsChecked.GetValueOrDefault();
         public string UnitValue { get => unitValue; set { unitValue = value; this.UpdateLastOp(); } }
         public string UnitAngle { get => unitAngle; set { unitAngle = value; this.UpdateLastOp(); } }
         public double ScaleFactor { get => scaleFactor; set { scaleFactor = value; this.BuildParts();  } }
@@ -121,19 +121,15 @@ namespace NineAxises
 
             this.UpdateAsRotate();
         }
-        protected void UpdateAsRotate()
-        {
-            this.XValueText.Text = string.Format("Roll:  {0}{1}", this.lastVector.X, this.UnitAngle);
-            this.YValueText.Text = string.Format("Pitch: {0}{1}", this.lastVector.Y, this.UnitAngle);
-            this.ZValueText.Text = string.Format("Yaw:   {0}{1}", this.lastVector.Z, this.UnitAngle);
-            this.DValueText.Text = string.Empty;
-        }
+
         public virtual void RedirectPointerTo(Vector3D V)
         {
             Vector3D N = (this.lastVector = V) - this.zeroVector;
 
             if ((D = N.Length) > 0.0)
             {
+                D *= Math.Sign(N.Z);
+
                 this.lastOp = Op.Redirect;
 
                 A = Math.Acos(N.Z / D);
@@ -161,15 +157,41 @@ namespace NineAxises
             }
             this.UpdateAsRedirect();
         }
+
         private void UpdateAsRedirect()
         {
-            this.XValueText.Text = string.Format("X: {0}{1}", this.lastVector.X, this.UnitValue);
-            this.YValueText.Text = string.Format("Y: {0}{1}", this.lastVector.Y, this.UnitValue);
-            this.ZValueText.Text = string.Format("Z: {0}{1}", this.lastVector.Z, this.UnitValue);
-            this.DValueText.Text = string.Format("D: {0}{1}", D, this.UnitValue);
-            this.AValueText.Text = string.Format("A: {0}{1}", A, this.UnitAngle);
-            this.PValueText.Text = string.Format("P: {0}{1}", P, this.UnitAngle);
 
+
+                this.XValueText.Text = string.Format("X: {0}{1}", this.AlignDoubleValue(this.lastVector.X), this.UnitValue);
+                this.YValueText.Text = string.Format("Y: {0}{1}", this.AlignDoubleValue(this.lastVector.Y), this.UnitValue);
+                this.ZValueText.Text = string.Format("Z: {0}{1}", this.AlignDoubleValue(this.lastVector.Z), this.UnitValue);
+                this.DValueText.Text = string.Format("D: {0}{1}", this.AlignDoubleValue(D), this.UnitValue);
+                this.AValueText.Text = string.Format("A: {0}{1}", this.AlignDoubleValue(A), this.UnitAngle);
+                this.PValueText.Text = string.Format("P: {0}{1}", this.AlignDoubleValue(P), this.UnitAngle);
+            
+        }
+
+
+        protected void UpdateAsRotate()
+        {
+
+
+                this.XValueText.Text = string.Format("Roll:  {0}{1}", this.AlignDoubleValue(this.lastVector.X), this.UnitAngle);
+                this.YValueText.Text = string.Format("Pitch: {0}{1}", this.AlignDoubleValue(this.lastVector.Y), this.UnitAngle);
+                this.ZValueText.Text = string.Format("Yaw:   {0}{1}", this.AlignDoubleValue(this.lastVector.Z), this.UnitAngle);
+                this.DValueText.Text = string.Empty;
+            
+        }
+
+        protected string AlignDoubleValue(double v)
+        {
+            string text = string.Format("{0}", v);
+            if(!text.StartsWith("-"))
+            {
+                text = "+" + text;
+            }
+            text = text.PadRight(18, '0');
+            return text;
         }
         private void UserControl_Initialized(object sender, EventArgs e)
         {
@@ -485,6 +507,16 @@ namespace NineAxises
         private void ZeroCheckBox_Unchecked(object sender, System.Windows.RoutedEventArgs e)
         {
             this.ZeroVector = default(Vector3D);
+        }
+
+        private void XYZCheckBox_Unchecked(object sender, System.Windows.RoutedEventArgs e)
+        {
+
+        }
+
+        private void XYZCheckBox_Checked(object sender, System.Windows.RoutedEventArgs e)
+        {
+
         }
     }
 }
