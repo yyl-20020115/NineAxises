@@ -20,6 +20,12 @@ namespace NineAxises
         private const int MessageLength = 11;
         private const int RxBufferLength = MessageLength<<1;
 
+        private const double GFactor = 2.0;
+        private const double MFactor = 100.0;
+        private const double AFactor = 200.0;
+        private const double RFactor = 180.0;
+        private const double PFactor = 360.0;
+
         private string PortName = string.Empty;
 
         private SerialPort Port = null;
@@ -33,56 +39,40 @@ namespace NineAxises
         private bool closing = false;
         private bool closed = false;
 
-        private DispatcherTimer timer = null;
         private UpdateData updateData = null;
-
-        private long TotalReadLength = 0L;
-        private long LastTotalReadLength = 0L;
 
         private string DefaultTitle = string.Empty;
         public MainWindow()
         {
             InitializeComponent();
-            this.timer = new DispatcherTimer(TimeSpan.FromSeconds(1.0),DispatcherPriority.Normal, new EventHandler(this.OnTimer),this.Dispatcher);
             this.updateData = new UpdateData(this.DecodeDataAndUpdate);
 
         }
 
-        //440B/s
-        private void OnTimer(object sender,EventArgs e)
-        {
-            
-            long DeltaReadLength = this.TotalReadLength - this.LastTotalReadLength;
 
-            this.Title = this.DefaultTitle + string.Format(" Speed:{0} B/s", DeltaReadLength);
-
-            this.LastTotalReadLength = this.TotalReadLength;
-
-        }
 
         private void Window_Initialized(object sender, EventArgs e)
         {
             
             this.Title = this.DefaultTitle = "九轴传感器";
+
+            this.GravityDisplay.Title = "重力场";
             this.GravityDisplay.AText = "重力场强度";
             this.GravityDisplay.TText = "水平方向角";
             this.GravityDisplay.DText = "垂直方向角";
+            this.GravityDisplay.UnitValue = "g";
+            this.GravityDisplay.ScaleFactor = 1.0;
+            this.GravityDisplay.MaxVector = new Vector3D(GFactor, GFactor, GFactor);
+            this.GravityDisplay.MaxATD = new Vector3D(GFactor, PFactor, RFactor);
+
             this.MagnetDisplay.AText = "磁场强度  ";
             this.MagnetDisplay.TText = "水平方向角";
             this.MagnetDisplay.DText = "垂直方向角";
-
-            this.AngleSpeedDisplay.AText = "角速度    ";
-            this.AngleSpeedDisplay.TText = "水平方向角";
-            this.AngleSpeedDisplay.DText = "垂直方向角";
-
-            this.GravityDisplay.Title = "重力场";
             this.MagnetDisplay.Title = "磁场";
-            this.AngleSpeedDisplay.Title = "角速度";
-            this.AngleValueDisplay.Title = "方位角";
-
-            this.GravityDisplay.ScaleFactor = 1.0;
+            this.MagnetDisplay.UnitValue = "uT";
             this.MagnetDisplay.ScaleFactor = 1.0 / 1000.0;
-            this.AngleSpeedDisplay.ScaleFactor = double.NaN;
+            this.MagnetDisplay.MaxVector = new Vector3D(MFactor, MFactor, MFactor);
+            this.MagnetDisplay.MaxATD = new Vector3D(MFactor, PFactor, RFactor);
 
             this.GravityDisplay.UnitAngle
                 = this.MagnetDisplay.UnitAngle
@@ -90,17 +80,29 @@ namespace NineAxises
                 = this.AngleValueDisplay.UnitAngle
                 = "°";
 
-            this.GravityDisplay.UnitValue = "g";
-            this.MagnetDisplay.UnitValue = "uT";
+
+            this.AngleSpeedDisplay.AText = "角速度    ";
+            this.AngleSpeedDisplay.TText = "水平方向角";
+            this.AngleSpeedDisplay.DText = "垂直方向角";
+            this.AngleSpeedDisplay.Title = "角速度";
             this.AngleSpeedDisplay.UnitValue = "°/s";
+            this.AngleSpeedDisplay.MaxVector = new Vector3D(AFactor, AFactor, AFactor);
+            this.AngleSpeedDisplay.MaxATD = new Vector3D(AFactor, PFactor, RFactor);
+
+            this.AngleValueDisplay.Title = "方位角";
             this.AngleValueDisplay.UnitValue = "°";
             this.AngleValueDisplay.AText = "滚转角";
             this.AngleValueDisplay.TText = "俯仰角";
             this.AngleValueDisplay.DText = "偏航角";
+            this.AngleValueDisplay.MaxATD = new Vector3D(RFactor, RFactor, RFactor);
 
             this.AngleValueDisplay.AValueText.Visibility = Visibility.Hidden;
             this.AngleValueDisplay.TValueText.Visibility = Visibility.Hidden;
             this.AngleValueDisplay.DValueText.Visibility = Visibility.Hidden;
+
+
+
+
 
             this.GravityDisplay.InputMode = AxisDisplayerControl.Modes.Vector;
             this.MagnetDisplay.InputMode = AxisDisplayerControl.Modes.Vector;
@@ -128,7 +130,6 @@ namespace NineAxises
                 this.CloseComPort();
                 try
                 {
-                    this.timer.Stop();
                     this.Port = new SerialPort(this.PortName = m.Header.ToString(),
                         DefaultBaudRate);
                     this.Port.ReceivedBytesThreshold = RxBufferLength;
@@ -139,7 +140,6 @@ namespace NineAxises
                     {
                         m.IsChecked = true;
                     }
-                    this.timer.Start();
                 }
                 catch(Exception ex)
                 {
@@ -166,7 +166,6 @@ namespace NineAxises
                 {
                     int DeltaLength = RxBufferLength - usRxLength;
                     int ReadLength = this.Port.BytesToRead > DeltaLength ? DeltaLength : this.Port.BytesToRead;
-                    this.TotalReadLength+= ReadLength;
 
                     int usLength = this.Port.Read(RxBuffer, usRxLength, ReadLength);
 
@@ -299,8 +298,6 @@ namespace NineAxises
 
         private void CloseComPort()
         {
-            this.timer.Stop();
-
             if (this.Port != null)
             {
                 this.closing = true;

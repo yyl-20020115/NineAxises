@@ -32,6 +32,7 @@
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition/>
+                        <ColumnDefinition Width="40"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock x:Name="TitleText" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">Title</TextBlock>
                     <TextBlock x:Name="XValueText" Grid.Row="1" Grid.Column="0">x:</TextBlock>
@@ -40,8 +41,8 @@
                     <TextBlock x:Name="AValueText" Grid.Row="4" Grid.Column="0">a:</TextBlock>
                     <TextBlock x:Name="TValueText" Grid.Row="5" Grid.Column="0">t:</TextBlock>
                     <TextBlock x:Name="DValueText" Grid.Row="6" Grid.Column="0">d:</TextBlock>
-                    <!--<CheckBox x:Name="ZeroCheckBox" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" Grid.Column="2" Unchecked="ZeroCheckBox_Unchecked" Checked="ZeroCheckBox_Checked">Zero</CheckBox>
-                    <CheckBox x:Name="XYZCheckBox" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="2" Grid.Column="2" Unchecked="XYZCheckBox_Unchecked" Checked="XYZCheckBox_Checked">+XYZ</CheckBox>-->
+                    <CheckBox x:Name="ZeroCheckBox" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" Grid.Column="2" Unchecked="ZeroCheckBox_Unchecked" Checked="ZeroCheckBox_Checked">Z</CheckBox>
+                    <CheckBox x:Name="XYZCheckBox" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="2" Grid.Column="2" Unchecked="XYZCheckBox_Unchecked" Checked="XYZCheckBox_Checked">A</CheckBox>
 
                 </Grid>
                 <Viewport3D Name="Canvas" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="1">

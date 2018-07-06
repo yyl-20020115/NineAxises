@@ -5,8 +5,6 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -24,11 +22,17 @@ namespace NineAxises
         public float Tension = 0.5f;
         public float PenWidth = 1.0f;
 
-        public System.Drawing.Color XColor;
-        public System.Drawing.Color YColor;
-        public System.Drawing.Color ZColor;
+        private System.Drawing.Color xColor = System.Drawing.Color.FromArgb(255, 0, 0);
+        private System.Drawing.Color yColor = System.Drawing.Color.FromArgb(0, 255, 0);
+        private System.Drawing.Color zColor = System.Drawing.Color.FromArgb(0, 0, 255);
+        public System.Drawing.Color XColor { get => xColor; set => xColor = value; }
+        public System.Drawing.Color YColor { get => yColor; set => yColor = value; }
+        public System.Drawing.Color ZColor { get => zColor; set => zColor = value; }
 
-        public List<Vector3D> Data = new List<Vector3D>();
+        private List<Vector3D> data = new List<Vector3D>();
+
+        public List<Vector3D> Data => this.data;
+
 
         public DrawCanvas()
         {
@@ -36,52 +40,78 @@ namespace NineAxises
             visual = new DrawingVisual();
             graphics.Add(visual);
         }
-
+        public void ClearData()
+        {
+            this.Data.Clear();
+        }
         public void Draw(Vector3D V)
         {
             this.Data.Add(V);
 
-            if (this.Data.Count >= 2 * this.Width)
+            if (this.data.Count >= 2 * this.ActualWidth)
             {
-                this.Data = this.Data.Skip((int)this.Width).ToList();
+                this.data = this.data.Skip((int)this.ActualWidth).ToList();
             }
 
-            int DrawingSamples = this.Data.Count > this.Width ? (int)this.Width : this.Data.Count;
-
-
-            (double[], System.Drawing.Color)[] lines = new (double[], System.Drawing.Color)[3];
-            lines[0] = (new double[DrawingSamples], this.XColor);
-            lines[1] = (new double[DrawingSamples], this.YColor);
-            lines[2] = (new double[DrawingSamples], this.ZColor);
-
-            int i = 0;
-            foreach (var d  in this.Data.Skip(this.Data.Count - DrawingSamples))
+            if (!double.IsNaN(this.ActualWidth) && !double.IsNaN(this.ActualHeight) && this.ActualWidth>=1.0 && this.ActualHeight>=1.0) 
             {
-                lines[0].Item1[i] = d.X;
-                lines[1].Item1[i] = d.Y;
-                lines[2].Item1[i] = d.Z;
+                int sc = this.data.Count > this.ActualWidth ? (int)this.ActualWidth : this.data.Count;
+
+                (double[], System.Drawing.Color)[] lines = new(double[], System.Drawing.Color)[3];
+                lines[0] = (new double[sc], this.XColor);
+                lines[1] = (new double[sc], this.YColor);
+                lines[2] = (new double[sc], this.ZColor);
+
+                int i = 0;
+                foreach (var d in this.data.Skip(this.Data.Count - sc))
+                {
+                    lines[0].Item1[i] = d.X;
+                    lines[1].Item1[i] = d.Y;
+                    lines[2].Item1[i] = d.Z;
+                    i++;
+                }
+                this.DrawCurves(lines);
+
             }
-            this.DrawCurves(lines);
         }
 
         public void DrawCurves((double[], System.Drawing.Color)[] Lines)
         {
-            var bitmap = new Bitmap((int)this.Width, (int)this.Height);
-            using (var graphics = Graphics.FromImage(bitmap))
+            if (!double.IsNaN(this.ActualWidth) && !double.IsNaN(this.ActualHeight) && this.ActualWidth >= 1.0 && this.ActualHeight >= 1.0)
             {
-                graphics.FillRectangle(System.Drawing.Brushes.Black, new Rectangle(0, 0, (int)Width, (int)Height));
-                graphics.Transform = new System.Drawing.Drawing2D.Matrix(1, 0, 0, -1, 0, 0);//Y轴向上为正，X向右为
-                graphics.TranslateTransform(0, (int)(Height / 2), MatrixOrder.Append);
-
-                using (var context = this.visual.RenderOpen())
+                var bitmap = new Bitmap((int)this.ActualWidth, (int)this.ActualHeight);
+                using (var graphics = Graphics.FromImage(bitmap))
                 {
-                    foreach (var line in Lines)
-                    {
-                        this.DrawCurve(graphics,line.Item1,line.Item2,this.PenWidth, this.Tension);
-                    }
-                    context.DrawImage(this.ToBitmapImage(bitmap), new Rect(0.0,0.0,this.Width,this.Height)); 
-                }
+                    graphics.FillRectangle(System.Drawing.Brushes.White, new Rectangle(0, 0, (int)ActualWidth, (int)ActualHeight));
+                    graphics.Transform = new System.Drawing.Drawing2D.Matrix(1, 0, 0, -1, 0, 0);//Y轴向上为正，X向右为
+                    graphics.TranslateTransform(0, (int)(ActualHeight / 2), MatrixOrder.Append);
 
+                    using (var context = this.visual.RenderOpen())
+                    {
+                        foreach (var line in Lines)
+                        {
+                            this.DrawCurve(graphics, line.Item1, line.Item2, this.PenWidth, this.Tension);
+                        }
+                        context.DrawImage(this.ToBitmapImage(bitmap), new Rect(0.0, 0.0, this.ActualWidth, this.ActualHeight));
+                    }
+                }
+            }
+        }
+
+        private void DrawCurve(Graphics graphics, double[] points, System.Drawing.Color color, float penWidth, float tension)
+        {
+            using (System.Drawing.Pen CurvePen = new System.Drawing.Pen(color, penWidth))
+            {
+                PointF[] CurvePointF = new PointF[points.Length];
+                float xSlice = (float)this.ActualWidth / points.Length;
+                float yHeight = (float)this.ActualHeight / 2.0f;
+                for (int i = 0; i < points.Length; i++)
+                {
+                    float x = xSlice * i;
+                    float y = (float)(yHeight * points[i]);
+                    CurvePointF[i] = new PointF(x, y);
+                }
+                graphics.DrawCurve(CurvePen, CurvePointF, tension);
             }
         }
 
@@ -102,23 +132,6 @@ namespace NineAxises
         }
 
 
-        private void DrawCurve(Graphics graphics, double[] points,System.Drawing.Color color,float penWidth,float tension)
-        {
-            using (System.Drawing.Pen CurvePen = new System.Drawing.Pen(color, penWidth))
-            {
-                PointF[] CurvePointF = new PointF[points.Length];
-                float xSlice =(float) this.Width / points.Length;
-                float yHeight = (float)this.Height / 2.0f;
-                for (int i = 0; i < points.Length; i++)
-                {
-                    float x = xSlice * i;
-                    float y = (float)(yHeight * points[i]);
-                    CurvePointF[i] = new PointF(x, y);
-                }
-                graphics.DrawCurve(CurvePen, CurvePointF, tension);
-            }
-        }
-
 
 
         /// <summary>
@@ -133,6 +146,7 @@ namespace NineAxises
                 return n;
             }
         }
+
 
         /// <summary>
         /// Get visual child - one of GraphicsBase objects

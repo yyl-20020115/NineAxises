@@ -12,11 +12,13 @@ namespace NineAxises
     /// </summary>
     public partial class AxisDisplayerControl : UserControl
     {
-        public enum Modes
+        private const string FormatText = ": {0}{1}";
+
+        public enum Modes : int
         {
-            None,
-            Rotate,
-            Vector,
+            None = 0,
+            Rotate = 1,
+            Vector = 2,
         }
 
         private string unitValue = string.Empty;
@@ -47,15 +49,17 @@ namespace NineAxises
         private Modes _drawMode = Modes.None;
         private Vector3D _maxVector = new Vector3D(1.0, 1.0, 1.0);
         private Vector3D _maxATD = new Vector3D(1.0, 1.0, 1.0);
-        private System.Drawing.Color _xColor = System.Drawing.Color.FromArgb(255, 0, 0);
-        private System.Drawing.Color _yColor = System.Drawing.Color.FromArgb(0, 255, 0);
-        private System.Drawing.Color _zColor = System.Drawing.Color.FromArgb(0, 0, 255);
-        private System.Drawing.Color _aColor = System.Drawing.Color.FromArgb(255, 255, 0);
-        private System.Drawing.Color _tColor = System.Drawing.Color.FromArgb(0, 255, 255);
-        private System.Drawing.Color _dColor = System.Drawing.Color.FromArgb(255, 0, 255);
+        private System.Drawing.Color _aColor = System.Drawing.Color.FromArgb(255, 0, 0);
+        private System.Drawing.Color _tColor = System.Drawing.Color.FromArgb(0, 255, 0);
+        private System.Drawing.Color _dColor = System.Drawing.Color.FromArgb(0, 0, 255);
+        private System.Drawing.Color _xColor = System.Drawing.Color.FromArgb(255, 255, 0);
+        private System.Drawing.Color _yColor = System.Drawing.Color.FromArgb(0, 255, 255);
+        private System.Drawing.Color _zColor = System.Drawing.Color.FromArgb(255, 0, 255);
 
-        public Modes InputMode { get => _inputMode; set { _inputMode = value; this._drawMode = this.DrawMode == Modes.None ? this._inputMode : this._drawMode; this.Update(); } }
-        public Modes DrawMode { get => _drawMode; set { _drawMode = value; this.Update(); } }
+        public Modes InputMode { get => _inputMode; set { _inputMode = value;
+                this._drawMode = this.DrawMode == Modes.None ? this._inputMode : this._drawMode;
+                this.Update(); } }
+        public Modes DrawMode { get => _drawMode; set { _drawMode = value; this.CurveCanvas.ClearData(); this.Update(); } }
         public string Title
         {
             get { return this.TitleText.Text; }
@@ -147,23 +151,24 @@ namespace NineAxises
         }
         private void Draw(Vector3D V)
         {
-            switch (this.DrawMode)
+            if(this.DrawMode == Modes.Vector)
             {
-                case Modes.Vector:
-                    this.CurveCanvas.XColor = this.XColor;
-                    this.CurveCanvas.YColor = this.YColor;
-                    this.CurveCanvas.ZColor = this.ZColor;
+                this.CurveCanvas.XColor = this.XColor;
+                this.CurveCanvas.YColor = this.YColor;
+                this.CurveCanvas.ZColor = this.ZColor;
 
-                    this.CurveCanvas.Draw(this.Divide(this.lastVector ,this.MaxVector));
-                    break;
-                case Modes.Rotate:
-                    this.CurveCanvas.XColor = this.AColor;
-                    this.CurveCanvas.YColor = this.TColor;
-                    this.CurveCanvas.ZColor = this.DColor;
+                this.CurveCanvas.Draw(this.Divide(this.lastVector, this.MaxVector));
 
-                    this.CurveCanvas.Draw(this.Divide(this.lastATD, this.MaxATD));
-                    break;
             }
+            else if(this.DrawMode == Modes.Rotate)
+            {
+                this.CurveCanvas.XColor = this.AColor;
+                this.CurveCanvas.YColor = this.TColor;
+                this.CurveCanvas.ZColor = this.DColor;
+
+                this.CurveCanvas.Draw(this.Divide(this.lastATD, this.MaxATD));
+            }
+
         }
         public virtual void AddValue(Vector3D V)
         {
@@ -190,6 +195,8 @@ namespace NineAxises
             this.lastVector.X = Roll;
             this.lastVector.Y = Pitch;
             this.lastVector.Z = Yaw;
+
+            this.lastATD = this.lastVector;
 
             Vector3D N = this.lastVector - this.zeroVector;
 
@@ -237,22 +244,23 @@ namespace NineAxises
             this.Update();
         }
 
+
         private void UpdateVectorInfo()
         {
-            this.XValueText.Text = this.XText + string.Format(": {0}{1}", this.AlignDoubleValue(this.lastVector.X), this.UnitValue);
-            this.YValueText.Text = this.YText + string.Format(": {0}{1}", this.AlignDoubleValue(this.lastVector.Y), this.UnitValue);
-            this.ZValueText.Text = this.ZText + string.Format(": {0}{1}", this.AlignDoubleValue(this.lastVector.Z), this.UnitValue);
-            this.AValueText.Text = this.AText + string.Format(": {0}{1}", this.AlignDoubleValue(A), this.UnitValue);
-            this.TValueText.Text = this.TText + string.Format(": {0}{1}", this.AlignDoubleValue(T), this.UnitAngle);
-            this.DValueText.Text = this.DText + string.Format(": {0}{1}", this.AlignDoubleValue(D), this.UnitAngle);
+            this.XValueText.Text = this.XText + string.Format(FormatText, this.AlignDoubleValue(this.lastVector.X), this.UnitValue);
+            this.YValueText.Text = this.YText + string.Format(FormatText, this.AlignDoubleValue(this.lastVector.Y), this.UnitValue);
+            this.ZValueText.Text = this.ZText + string.Format(FormatText, this.AlignDoubleValue(this.lastVector.Z), this.UnitValue);
+            this.AValueText.Text = this.AText + string.Format(FormatText, this.AlignDoubleValue(A), this.UnitValue);
+            this.TValueText.Text = this.TText + string.Format(FormatText, this.AlignDoubleValue(T), this.UnitAngle);
+            this.DValueText.Text = this.DText + string.Format(FormatText, this.AlignDoubleValue(D), this.UnitAngle);
         }
 
 
         protected void UpdateRotateInfo()
         {
-            this.XValueText.Text = string.Format(this.AText + ":{0}{1}", this.AlignDoubleValue(this.lastVector.X), this.UnitAngle);
-            this.YValueText.Text = string.Format(this.TText + ":{0}{1}", this.AlignDoubleValue(this.lastVector.Y), this.UnitAngle);
-            this.ZValueText.Text = string.Format(this.DText + ":{0}{1}", this.AlignDoubleValue(this.lastVector.Z), this.UnitAngle);
+            this.XValueText.Text = this.AText + string.Format(FormatText, this.AlignDoubleValue(this.lastVector.X), this.UnitAngle);
+            this.YValueText.Text = this.TText + string.Format(FormatText, this.AlignDoubleValue(this.lastVector.Y), this.UnitAngle);
+            this.ZValueText.Text = this.DText + string.Format(FormatText, this.AlignDoubleValue(this.lastVector.Z), this.UnitAngle);
         }
 
         protected string AlignDoubleValue(double v)
@@ -583,12 +591,18 @@ namespace NineAxises
 
         private void XYZCheckBox_Unchecked(object sender, System.Windows.RoutedEventArgs e)
         {
-
+            if(this.InputMode == Modes.Vector)
+            {
+                this.DrawMode = Modes.Vector;
+            }
         }
 
         private void XYZCheckBox_Checked(object sender, System.Windows.RoutedEventArgs e)
         {
-
+            if (this.InputMode == Modes.Vector)
+            {
+                this.DrawMode = Modes.Rotate;
+            }
         }
     }
 }
