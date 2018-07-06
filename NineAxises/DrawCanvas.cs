@@ -12,6 +12,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
 
 namespace NineAxises
 {
@@ -23,6 +24,12 @@ namespace NineAxises
         public float Tension = 0.5f;
         public float PenWidth = 1.0f;
 
+        public System.Drawing.Color XColor;
+        public System.Drawing.Color YColor;
+        public System.Drawing.Color ZColor;
+
+        public List<Vector3D> Data = new List<Vector3D>();
+
         public DrawCanvas()
         {
             graphics = new VisualCollection(this);
@@ -30,7 +37,34 @@ namespace NineAxises
             graphics.Add(visual);
         }
 
-        public void DrawCurves(List<(List<float>, System.Drawing.Color)> Lines)
+        public void Draw(Vector3D V)
+        {
+            this.Data.Add(V);
+
+            if (this.Data.Count >= 2 * this.Width)
+            {
+                this.Data = this.Data.Skip((int)this.Width).ToList();
+            }
+
+            int DrawingSamples = this.Data.Count > this.Width ? (int)this.Width : this.Data.Count;
+
+
+            (double[], System.Drawing.Color)[] lines = new (double[], System.Drawing.Color)[3];
+            lines[0] = (new double[DrawingSamples], this.XColor);
+            lines[1] = (new double[DrawingSamples], this.YColor);
+            lines[2] = (new double[DrawingSamples], this.ZColor);
+
+            int i = 0;
+            foreach (var d  in this.Data.Skip(this.Data.Count - DrawingSamples))
+            {
+                lines[0].Item1[i] = d.X;
+                lines[1].Item1[i] = d.Y;
+                lines[2].Item1[i] = d.Z;
+            }
+            this.DrawCurves(lines);
+        }
+
+        public void DrawCurves((double[], System.Drawing.Color)[] Lines)
         {
             var bitmap = new Bitmap((int)this.Width, (int)this.Height);
             using (var graphics = Graphics.FromImage(bitmap))
@@ -68,17 +102,17 @@ namespace NineAxises
         }
 
 
-        private void DrawCurve(Graphics graphics, List<float> points,System.Drawing.Color color,float penWidth,float tension)
+        private void DrawCurve(Graphics graphics, double[] points,System.Drawing.Color color,float penWidth,float tension)
         {
             using (System.Drawing.Pen CurvePen = new System.Drawing.Pen(color, penWidth))
             {
-                PointF[] CurvePointF = new PointF[points.Count];
-                float xSlice =(float) this.Width / points.Count;
+                PointF[] CurvePointF = new PointF[points.Length];
+                float xSlice =(float) this.Width / points.Length;
                 float yHeight = (float)this.Height / 2.0f;
-                for (int i = 0; i < points.Count; i++)
+                for (int i = 0; i < points.Length; i++)
                 {
                     float x = xSlice * i;
-                    float y = yHeight * points[i];
+                    float y = (float)(yHeight * points[i]);
                     CurvePointF[i] = new PointF(x, y);
                 }
                 graphics.DrawCurve(CurvePen, CurvePointF, tension);

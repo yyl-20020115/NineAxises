@@ -12,14 +12,21 @@ namespace NineAxises
     /// </summary>
     public partial class AxisDisplayerControl : UserControl
     {
+        public enum Modes
+        {
+            None,
+            Rotate,
+            Vector,
+        }
+
         private string unitValue = string.Empty;
         private string unitAngle = string.Empty;
 
-        private double D = 0.0;
         private double A = 0.0;
-        private double P = 0.0;
+        private double T = 0.0;
+        private double D = 0.0;
 
-        private double scaleFactor = 1.0;
+        private double scaleFactor = 0.5;
         private double bodyRadius = 1.0;
         private double bodyThickness = 0.01;
         private double stickRaidus = 0.02;
@@ -28,36 +35,75 @@ namespace NineAxises
 
         private Vector3D lastVector = default(Vector3D);
         private Vector3D zeroVector = default(Vector3D);
+        private Vector3D lastATD = default(Vector3D);
 
-        private enum Op
-        {
-            None,
-            Rotate,
-            Redirect,
-        }
-        private Op lastOp = Op.None;
+        private string _aText = string.Empty;
+        private string _tText = string.Empty;
+        private string _dText = string.Empty;
+        private string _xText = string.Empty;
+        private string _yText = string.Empty;
+        private string _zText = string.Empty;
+        private Modes _inputMode = Modes.None;
+        private Modes _drawMode = Modes.None;
+        private Vector3D _maxVector = new Vector3D(1.0, 1.0, 1.0);
+        private Vector3D _maxATD = new Vector3D(1.0, 1.0, 1.0);
+        private System.Drawing.Color _xColor = System.Drawing.Color.FromArgb(255, 0, 0);
+        private System.Drawing.Color _yColor = System.Drawing.Color.FromArgb(0, 255, 0);
+        private System.Drawing.Color _zColor = System.Drawing.Color.FromArgb(0, 0, 255);
+        private System.Drawing.Color _aColor = System.Drawing.Color.FromArgb(255, 255, 0);
+        private System.Drawing.Color _tColor = System.Drawing.Color.FromArgb(0, 255, 255);
+        private System.Drawing.Color _dColor = System.Drawing.Color.FromArgb(255, 0, 255);
 
+        public Modes InputMode { get => _inputMode; set { _inputMode = value; this._drawMode = this.DrawMode == Modes.None ? this._inputMode : this._drawMode; this.Update(); } }
+        public Modes DrawMode { get => _drawMode; set { _drawMode = value; this.Update(); } }
         public string Title
         {
             get { return this.TitleText.Text; }
-            set { this.TitleText.Text = value ?? string.Empty;}
+            set { this.TitleText.Text = value ?? string.Empty; }
         }
-        public bool IsXYZChecked => this.XYZCheckBox.IsChecked.GetValueOrDefault();
-        public string UnitValue { get => unitValue; set { unitValue = value; this.UpdateLastOp(); } }
-        public string UnitAngle { get => unitAngle; set { unitAngle = value; this.UpdateLastOp(); } }
-        public double ScaleFactor { get => scaleFactor; set { scaleFactor = value; this.BuildParts();  } }
 
-        public double BodyRadius { get => bodyRadius; set { bodyRadius = value; this.BuildParts(); } }
-        public double BodyThickness { get => bodyThickness; set { bodyThickness = value; this.BuildParts(); } }
-        public double StickRaidus { get => stickRaidus; set { stickRaidus = value; this.BuildParts(); } }
-        public double StickLength { get => stickLength; set { stickLength = value; this.BuildParts(); } }
-        public int Segments { get => segments; set { segments = value; this.BuildParts(); } }
+        public string XText { get => _xText; set { _xText = value; this.Update(); } }
+        public string YText { get => _yText; set { _yText = value; this.Update(); } }
+        public string ZText { get => _zText; set { _zText = value; this.Update(); } }
 
-        public Vector3D ZeroVector { get => zeroVector; set { zeroVector = value; } }
+
+        public string AText { get => _aText; set { _aText = value; this.Update(); } }
+        public string TText { get => _tText; set { _tText = value; this.Update(); } }
+        public string DText { get => _dText; set { _dText = value; this.Update(); } }
+        //public bool IsXYZChecked => this.XYZCheckBox.IsChecked.GetValueOrDefault();
+        public string UnitValue { get => unitValue; set { unitValue = value; this.Update(); } }
+        public string UnitAngle { get => unitAngle; set { unitAngle = value; this.Update(); } }
+        public double ScaleFactor { get => scaleFactor; set { scaleFactor = value; this.BuildParts(); this.Update(); } }
+
+        public double BodyRadius { get => bodyRadius; set { bodyRadius = value; this.BuildParts(); this.Update(); } }
+        public double BodyThickness { get => bodyThickness; set { bodyThickness = value; this.BuildParts(); this.Update(); } }
+        public double StickRaidus { get => stickRaidus; set { stickRaidus = value; this.BuildParts(); this.Update(); } }
+        public double StickLength { get => stickLength; set { stickLength = value; this.BuildParts(); this.Update(); } }
+        public int Segments { get => segments; set { segments = value; this.BuildParts(); this.Update(); } }
+
+        public Vector3D ZeroVector { get => zeroVector; set { zeroVector = value; this.Update(); } }
+
+        public Vector3D MaxVector { get => _maxVector; set { _maxVector = value; this.Update(); } }
+        public Vector3D MaxATD { get => _maxATD; set { _maxATD = value; this.Update(); } }
+
+        public System.Drawing.Color XColor { get => _xColor; set { _xColor = value; this.Update(); } }
+        public System.Drawing.Color YColor { get => _yColor; set { _yColor = value; this.Update(); } }
+        public System.Drawing.Color ZColor { get => _zColor; set { _zColor = value; this.Update(); } }
+
+        public System.Drawing.Color AColor { get => _aColor; set { _aColor = value; this.Update(); } }
+        public System.Drawing.Color TColor { get => _tColor; set { _tColor = value; this.Update(); } }
+        public System.Drawing.Color DColor { get => _dColor; set { _dColor = value; this.Update(); } }
+
 
         public AxisDisplayerControl()
         {
             InitializeComponent();
+            this.XText = "x";
+            this.YText = "y";
+            this.ZText = "z";
+            this.AText = "a";
+            this.TText = "t";
+            this.DText = "d";
         }
 
         public virtual void Look(Point3D SelfLocation)
@@ -65,12 +111,11 @@ namespace NineAxises
             this.Look(SelfLocation, new Point3D());
         }
 
-        public virtual void Look(Point3D SelfLocation,Point3D TargetLocation)
+        public virtual void Look(Point3D SelfLocation, Point3D TargetLocation)
         {
             this.Camera.Position = SelfLocation;
             this.Camera.LookDirection = TargetLocation - SelfLocation;
         }
-
 
         private void BuildParts()
         {
@@ -79,39 +124,72 @@ namespace NineAxises
             this.Tail.Geometry = this.BuildCylinder(this.StickRaidus, -this.StickLength, this.Segments);
             this.Arm.Geometry = this.BuildCylinder(this.StickRaidus, this.StickLength, this.Segments);
         }
-        private void UpdateLastOp()
+        private void Update()
         {
-            if (this.lastOp != Op.None)
+            switch (this.InputMode)
             {
-                switch (this.lastOp)
-                {
-                    case Op.Redirect:
-                        this.UpdateAsRedirect();
-                        break;
-                    case Op.Rotate:
-                        this.UpdateAsRotate();
-                        break;
-                }
-                this.lastOp = Op.None;
+                case Modes.Vector:
+                    this.UpdateVectorInfo();
+                    break;
+                case Modes.Rotate:
+                    this.UpdateRotateInfo();
+                    break;
             }
+            if(this.InputMode!= Modes.None)
+            {
+                this.Draw(this.lastVector);
+            }
+        }
 
-        }
-        public virtual void RotatePointerTo(Vector3D V)
+        private Vector3D Divide(Vector3D a,Vector3D b)
         {
-            this.RotatePointerTo(V.X, V.Y, V.Z);
+            return new Vector3D(a.X / b.X, a.Y / b.Y, a.Z / b.Z);
         }
-        /*
-            滚转角（x轴）Roll
-            俯仰角（y轴）Pitch
-            偏航角（z轴）Yaw
-          */
-        public virtual void RotatePointerTo(double Roll, double Pitch, double Yaw)
+        private void Draw(Vector3D V)
+        {
+            switch (this.DrawMode)
+            {
+                case Modes.Vector:
+                    this.CurveCanvas.XColor = this.XColor;
+                    this.CurveCanvas.YColor = this.YColor;
+                    this.CurveCanvas.ZColor = this.ZColor;
+
+                    this.CurveCanvas.Draw(this.Divide(this.lastVector ,this.MaxVector));
+                    break;
+                case Modes.Rotate:
+                    this.CurveCanvas.XColor = this.AColor;
+                    this.CurveCanvas.YColor = this.TColor;
+                    this.CurveCanvas.ZColor = this.DColor;
+
+                    this.CurveCanvas.Draw(this.Divide(this.lastATD, this.MaxATD));
+                    break;
+            }
+        }
+        public virtual void AddValue(Vector3D V)
+        {
+            switch (this.InputMode)
+            {
+                case Modes.Rotate:
+                    this.AddRotateValue(V.X, V.Y, V.Z);
+                    break;
+                case Modes.Vector:
+                    this.AddVectorValue(V);
+                    break;
+            }
+        }
+        protected virtual void AddRotateValue(Vector3D V)
+        {
+            this.AddRotateValue(V.X, V.Y, V.Z);
+        }
+
+        //滚转角（x轴）Roll
+        //俯仰角（y轴）Pitch
+        //偏航角（z轴）Yaw
+        protected virtual void AddRotateValue(double Roll, double Pitch, double Yaw)
         {
             this.lastVector.X = Roll;
             this.lastVector.Y = Pitch;
             this.lastVector.Z = Yaw;
-
-            this.lastOp = Op.Rotate;
 
             Vector3D N = this.lastVector - this.zeroVector;
 
@@ -119,26 +197,26 @@ namespace NineAxises
             this.ZAxisRotation.Angle = N.Z;
             this.XAxisRotation.Angle = N.X;
 
-            this.UpdateAsRotate();
+            this.Update();
         }
 
-        public virtual void RedirectPointerTo(Vector3D V)
+        protected virtual void AddVectorValue(Vector3D V)
         {
             Vector3D N = (this.lastVector = V) - this.zeroVector;
 
-            if ((D = N.Length) > 0.0)
+            if ((A = N.Length) > 0.0)
             {
-                D *= Math.Sign(N.Z);
+                A *= Math.Sign(N.Z);
 
-                this.lastOp = Op.Redirect;
+                this.InputMode = Modes.Vector;
 
-                A = Math.Acos(N.Z / D);
-                P = Math.Atan2(N.Y, N.X);
+                T = Math.Acos(N.Z / A);
+                D = Math.Atan2(N.Y, N.X);
 
                 var M = Matrix3D.Identity;
 
-                M.Rotate(new Quaternion(new Vector3D(0.0, 1.0, 0.0), A * 180.0 / Math.PI));
-                M.Rotate(new Quaternion(new Vector3D(0.0, 0.0, 1.0), P * 180.0 / Math.PI));
+                M.Rotate(new Quaternion(new Vector3D(0.0, 1.0, 0.0), T * 180.0 / Math.PI));
+                M.Rotate(new Quaternion(new Vector3D(0.0, 0.0, 1.0), D * 180.0 / Math.PI));
 
                 this.Mat.Matrix = M;
 
@@ -146,47 +224,41 @@ namespace NineAxises
                 {
                     this.HeadLengthScale.ScaleZ
                     = this.TailLengthScale.ScaleZ
-                    = D * this.scaleFactor;
+                    = A * this.scaleFactor;
                 }
+                this.lastATD = new Vector3D(A, T, D);
             }
             else
             {
-                this.D = 0.0;
                 this.A = 0.0;
-                this.P = 0.0;
+                this.T = 0.0;
+                this.D = 0.0;
             }
-            this.UpdateAsRedirect();
+            this.Update();
         }
 
-        private void UpdateAsRedirect()
+        private void UpdateVectorInfo()
         {
-
-
-                this.XValueText.Text = string.Format("X: {0}{1}", this.AlignDoubleValue(this.lastVector.X), this.UnitValue);
-                this.YValueText.Text = string.Format("Y: {0}{1}", this.AlignDoubleValue(this.lastVector.Y), this.UnitValue);
-                this.ZValueText.Text = string.Format("Z: {0}{1}", this.AlignDoubleValue(this.lastVector.Z), this.UnitValue);
-                this.DValueText.Text = string.Format("D: {0}{1}", this.AlignDoubleValue(D), this.UnitValue);
-                this.AValueText.Text = string.Format("A: {0}{1}", this.AlignDoubleValue(A), this.UnitAngle);
-                this.PValueText.Text = string.Format("P: {0}{1}", this.AlignDoubleValue(P), this.UnitAngle);
-            
+            this.XValueText.Text = this.XText + string.Format(": {0}{1}", this.AlignDoubleValue(this.lastVector.X), this.UnitValue);
+            this.YValueText.Text = this.YText + string.Format(": {0}{1}", this.AlignDoubleValue(this.lastVector.Y), this.UnitValue);
+            this.ZValueText.Text = this.ZText + string.Format(": {0}{1}", this.AlignDoubleValue(this.lastVector.Z), this.UnitValue);
+            this.AValueText.Text = this.AText + string.Format(": {0}{1}", this.AlignDoubleValue(A), this.UnitValue);
+            this.TValueText.Text = this.TText + string.Format(": {0}{1}", this.AlignDoubleValue(T), this.UnitAngle);
+            this.DValueText.Text = this.DText + string.Format(": {0}{1}", this.AlignDoubleValue(D), this.UnitAngle);
         }
 
 
-        protected void UpdateAsRotate()
+        protected void UpdateRotateInfo()
         {
-
-
-                this.XValueText.Text = string.Format("Roll:  {0}{1}", this.AlignDoubleValue(this.lastVector.X), this.UnitAngle);
-                this.YValueText.Text = string.Format("Pitch: {0}{1}", this.AlignDoubleValue(this.lastVector.Y), this.UnitAngle);
-                this.ZValueText.Text = string.Format("Yaw:   {0}{1}", this.AlignDoubleValue(this.lastVector.Z), this.UnitAngle);
-                this.DValueText.Text = string.Empty;
-            
+            this.XValueText.Text = string.Format(this.AText + ":{0}{1}", this.AlignDoubleValue(this.lastVector.X), this.UnitAngle);
+            this.YValueText.Text = string.Format(this.TText + ":{0}{1}", this.AlignDoubleValue(this.lastVector.Y), this.UnitAngle);
+            this.ZValueText.Text = string.Format(this.DText + ":{0}{1}", this.AlignDoubleValue(this.lastVector.Z), this.UnitAngle);
         }
 
         protected string AlignDoubleValue(double v)
         {
             string text = string.Format("{0}", v);
-            if(!text.StartsWith("-"))
+            if (!text.StartsWith("-"))
             {
                 text = "+" + text;
             }
@@ -354,8 +426,8 @@ namespace NineAxises
                 double lx = Math.Cos(d) * radius;
                 double ly = Math.Sin(d) * radius;
 
-                Points.Add(new Point3D(lx + x, ly + y,  z));
-                Points.Add(new Point3D(lx + x, ly + y,  z + height));
+                Points.Add(new Point3D(lx + x, ly + y, z));
+                Points.Add(new Point3D(lx + x, ly + y, z + height));
             }
 
             for (int i = 0; i < segments; i++)

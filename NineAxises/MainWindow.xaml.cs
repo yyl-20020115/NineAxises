@@ -6,6 +6,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Media3D;
+using System.Windows.Threading;
 
 namespace NineAxises
 {
@@ -32,17 +33,52 @@ namespace NineAxises
         private bool closing = false;
         private bool closed = false;
 
+        private DispatcherTimer timer = null;
+        private UpdateData updateData = null;
+
+        private long TotalReadLength = 0L;
+        private long LastTotalReadLength = 0L;
+
+        private string DefaultTitle = string.Empty;
         public MainWindow()
         {
             InitializeComponent();
+            this.timer = new DispatcherTimer(TimeSpan.FromSeconds(1.0),DispatcherPriority.Normal, new EventHandler(this.OnTimer),this.Dispatcher);
+            this.updateData = new UpdateData(this.DecodeDataAndUpdate);
+
+        }
+
+        //440B/s
+        private void OnTimer(object sender,EventArgs e)
+        {
+            
+            long DeltaReadLength = this.TotalReadLength - this.LastTotalReadLength;
+
+            this.Title = this.DefaultTitle + string.Format(" Speed:{0} B/s", DeltaReadLength);
+
+            this.LastTotalReadLength = this.TotalReadLength;
+
         }
 
         private void Window_Initialized(object sender, EventArgs e)
         {
-            this.GravityDisplay.Title = "Gravity Field";
-            this.MagnetDisplay.Title = "Magnet Field";
-            this.AngleSpeedDisplay.Title = "Angle Speed";
-            this.AngleValueDisplay.Title = "Angle Value";
+            
+            this.Title = this.DefaultTitle = "九轴传感器";
+            this.GravityDisplay.AText = "重力场强度";
+            this.GravityDisplay.TText = "水平方向角";
+            this.GravityDisplay.DText = "垂直方向角";
+            this.MagnetDisplay.AText = "磁场强度  ";
+            this.MagnetDisplay.TText = "水平方向角";
+            this.MagnetDisplay.DText = "垂直方向角";
+
+            this.AngleSpeedDisplay.AText = "角速度    ";
+            this.AngleSpeedDisplay.TText = "水平方向角";
+            this.AngleSpeedDisplay.DText = "垂直方向角";
+
+            this.GravityDisplay.Title = "重力场";
+            this.MagnetDisplay.Title = "磁场";
+            this.AngleSpeedDisplay.Title = "角速度";
+            this.AngleValueDisplay.Title = "方位角";
 
             this.GravityDisplay.ScaleFactor = 1.0;
             this.MagnetDisplay.ScaleFactor = 1.0 / 1000.0;
@@ -58,13 +94,23 @@ namespace NineAxises
             this.MagnetDisplay.UnitValue = "uT";
             this.AngleSpeedDisplay.UnitValue = "°/s";
             this.AngleValueDisplay.UnitValue = "°";
-            this.AngleValueDisplay.DValueText.Visibility = Visibility.Hidden;
+            this.AngleValueDisplay.AText = "滚转角";
+            this.AngleValueDisplay.TText = "俯仰角";
+            this.AngleValueDisplay.DText = "偏航角";
+
             this.AngleValueDisplay.AValueText.Visibility = Visibility.Hidden;
-            this.AngleValueDisplay.PValueText.Visibility = Visibility.Hidden;
-            this.GravityDisplay.RedirectPointerTo(new Vector3D());
-            this.MagnetDisplay.RedirectPointerTo(new Vector3D());
-            this.AngleSpeedDisplay.RedirectPointerTo(new Vector3D());
-            this.AngleValueDisplay.RedirectPointerTo(new Vector3D());
+            this.AngleValueDisplay.TValueText.Visibility = Visibility.Hidden;
+            this.AngleValueDisplay.DValueText.Visibility = Visibility.Hidden;
+
+            this.GravityDisplay.InputMode = AxisDisplayerControl.Modes.Vector;
+            this.MagnetDisplay.InputMode = AxisDisplayerControl.Modes.Vector;
+            this.AngleSpeedDisplay.InputMode = AxisDisplayerControl.Modes.Vector;
+            this.AngleValueDisplay.InputMode = AxisDisplayerControl.Modes.Rotate;
+
+            this.GravityDisplay.AddValue(new Vector3D());
+            this.MagnetDisplay.AddValue(new Vector3D());
+            this.AngleSpeedDisplay.AddValue(new Vector3D());
+            this.AngleValueDisplay.AddValue(new Vector3D());
 
             this.RebuildMainMenu();
         }
@@ -82,6 +128,7 @@ namespace NineAxises
                 this.CloseComPort();
                 try
                 {
+                    this.timer.Stop();
                     this.Port = new SerialPort(this.PortName = m.Header.ToString(),
                         DefaultBaudRate);
                     this.Port.ReceivedBytesThreshold = RxBufferLength;
@@ -92,6 +139,7 @@ namespace NineAxises
                     {
                         m.IsChecked = true;
                     }
+                    this.timer.Start();
                 }
                 catch(Exception ex)
                 {
@@ -108,18 +156,17 @@ namespace NineAxises
                 }
             }
         }
-
         private void Port_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             if (!this.closing)
             {
-                //115200bps = 11520Bps = 11*1Ksps
                 byte[] RmBuffer = new byte[RxBufferLength];
 
                 try
                 {
                     int DeltaLength = RxBufferLength - usRxLength;
                     int ReadLength = this.Port.BytesToRead > DeltaLength ? DeltaLength : this.Port.BytesToRead;
+                    this.TotalReadLength+= ReadLength;
 
                     int usLength = this.Port.Read(RxBuffer, usRxLength, ReadLength);
 
@@ -139,11 +186,13 @@ namespace NineAxises
                             usRxLength--;
                             continue;
                         }
+                        //11Bytes:
+                        //440Bytes/s / 11Bytes/sample = 40 samples/s
                         if (((RmBuffer[0] + RmBuffer[1] + RmBuffer[2] + RmBuffer[3] + RmBuffer[4] + RmBuffer[5] + RmBuffer[6] + RmBuffer[7] + RmBuffer[8] + RmBuffer[9]) & 0xff)
                             == RmBuffer[10])
                         {
                             Dispatcher.Invoke(
-                                new UpdateData(this.DecodeDataAndUpdate),
+                                this.updateData,
                                 TimeSpan.FromMilliseconds(
                                     DefaultUIDelayTimeMs
                                     ),
@@ -172,7 +221,6 @@ namespace NineAxises
         private void DecodeDataAndUpdate(byte[] buffer)
         {
             double[] Data = new double[4];
-
             Data[0] = BitConverter.ToInt16(buffer, 2);
             Data[1] = BitConverter.ToInt16(buffer, 4);
             Data[2] = BitConverter.ToInt16(buffer, 6);
@@ -185,7 +233,7 @@ namespace NineAxises
                     break;
                 case 0x51:
                     //Gravity
-                    this.GravityDisplay.RedirectPointerTo(
+                    this.GravityDisplay.AddValue(
                         new Vector3D(
                             Data[0] / 32768.0 * 16.0,
                             Data[1] / 32768.0 * 16.0,
@@ -195,7 +243,7 @@ namespace NineAxises
                     break;
                 case 0x52:
                     //AngleSpeed
-                    this.AngleSpeedDisplay.RedirectPointerTo(
+                    this.AngleSpeedDisplay.AddValue(
                         new Vector3D(
                             Data[0] / 32768.0 * 2000.0,
                             Data[1] / 32768.0 * 2000.0,
@@ -205,7 +253,7 @@ namespace NineAxises
                     break;
                 case 0x53:
                     //AngleValue
-                    this.AngleValueDisplay.RotatePointerTo(
+                    this.AngleValueDisplay.AddValue(
                         new Vector3D(
                             Data[0] / 32768.0 * 180.0,
                             Data[1] / 32768.0 * 180.0,
@@ -215,7 +263,7 @@ namespace NineAxises
                     break;
                 case 0x54:
                     //Magnet
-                    this.MagnetDisplay.RedirectPointerTo(
+                    this.MagnetDisplay.AddValue(
                         new Vector3D(
                             Data[0] / 32768.0 * 1200.0 * 2.0,
                             Data[1] / 32768.0 * 1200.0 * 2.0,
@@ -251,11 +299,13 @@ namespace NineAxises
 
         private void CloseComPort()
         {
+            this.timer.Stop();
+
             if (this.Port != null)
             {
                 this.closing = true;
 
-                while (!this.closed)
+                for(int i = 0;i<100 && (!this.closed);i++)
                 {
                     Thread.Sleep(10);
                 }

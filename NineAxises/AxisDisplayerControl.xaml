@@ -8,152 +8,169 @@
              d:DesignHeight="300" d:DesignWidth="300" Initialized="UserControl_Initialized" FontFamily="Consolas" FontSize="16">
     <Border BorderBrush="Blue" BorderThickness="2" Padding="4">
         <Grid>
-
             <Grid.RowDefinitions>
-                <RowDefinition Height="28" />
-                <RowDefinition Height="20" />
-                <RowDefinition Height="20" />
-                <RowDefinition Height="20" />
-                <RowDefinition Height="60" />
-                <RowDefinition Height="*" />
+                <RowDefinition/>
+                <RowDefinition/>
             </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
-                <ColumnDefinition Width="60"/>
-            </Grid.ColumnDefinitions>
-            <CheckBox x:Name="ZeroCheckBox" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="0" Grid.Column="2" Unchecked="ZeroCheckBox_Unchecked" Checked="ZeroCheckBox_Checked">Zero</CheckBox>
-            <CheckBox x:Name="XYZCheckBox" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" Grid.Column="2" Unchecked="XYZCheckBox_Unchecked" Checked="XYZCheckBox_Checked">+XYZ</CheckBox>
-            <TextBlock x:Name="TitleText" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">Title</TextBlock>
-            <TextBlock x:Name="XValueText" Grid.Row="1" Grid.Column="0">X:</TextBlock>
-            <TextBlock x:Name="YValueText" Grid.Row="2" Grid.Column="0">Y:</TextBlock>
-            <TextBlock x:Name="ZValueText" Grid.Row="3" Grid.Column="0">Z:</TextBlock>
-            <TextBlock x:Name="DValueText" Grid.Row="1" Grid.Column="1">D:</TextBlock>
-            <TextBlock x:Name="AValueText" Grid.Row="2" Grid.Column="1">A:</TextBlock>
-            <TextBlock x:Name="PValueText" Grid.Row="3" Grid.Column="1">P:</TextBlock>
-            <local:DrawCanvas x:Name="CurveCanvas" Grid.Row="4" Grid.Column="1"></local:DrawCanvas>
-            <Viewport3D Name="Canvas" Grid.Row="5" Grid.ColumnSpan="3">
-                <Viewport3D.Camera>
-                    <PerspectiveCamera x:Name="Camera" Position="4,0,0" LookDirection="-1,0,0" UpDirection="0,0,1"/>
-                </Viewport3D.Camera>
-                <ModelVisual3D >
-                    <ModelVisual3D.Content >
-                        <AmbientLight Color="White" />
-                    </ModelVisual3D.Content >
-                </ModelVisual3D >
-                <ModelVisual3D x:Name="Pointer">
-                    <ModelVisual3D.Children>
-                        <ModelVisual3D>
-                            <ModelVisual3D.Content>
-                                <GeometryModel3D x:Name="Body" >
-                                    <GeometryModel3D.Geometry>
-                                        <MeshGeometry3D Positions="-1 0 0, 1 0 0, 0 1 0" TriangleIndices="0, 1, 2" />
-                                    </GeometryModel3D.Geometry>
-                                    <GeometryModel3D.Material>
-                                        <DiffuseMaterial>
-                                            <DiffuseMaterial.Brush>
-                                                <SolidColorBrush Color="Yellow" Opacity="0.6" />
-                                            </DiffuseMaterial.Brush>
-                                        </DiffuseMaterial>
-                                    </GeometryModel3D.Material>
-                                </GeometryModel3D>
-                            </ModelVisual3D.Content>
-                        </ModelVisual3D>
-                        <ModelVisual3D>
-                            <ModelVisual3D.Content>
-                                <GeometryModel3D x:Name="Head" >
-                                    <GeometryModel3D.Geometry>
-                                        <MeshGeometry3D Positions="0 0 0, 0 0 2, 0 1 0" TriangleIndices="0, 1, 2" />
-                                    </GeometryModel3D.Geometry>
-                                    <GeometryModel3D.Material>
-                                        <DiffuseMaterial>
-                                            <DiffuseMaterial.Brush>
-                                                <SolidColorBrush Color="Blue" Opacity="0.8" />
-                                            </DiffuseMaterial.Brush>
-                                        </DiffuseMaterial>
-                                    </GeometryModel3D.Material>
-                                </GeometryModel3D>
+            <Grid>
 
-                            </ModelVisual3D.Content>
-                            <ModelVisual3D.Transform>
-                                <Transform3DGroup>
-                                    <MatrixTransform3D/>
-                                    <ScaleTransform3D ScaleZ="1.0" x:Name="HeadLengthScale"/>
-                                </Transform3DGroup>
-                            </ModelVisual3D.Transform>
-                        </ModelVisual3D>
-                        <ModelVisual3D>
-                            <ModelVisual3D.Content>
-                                <GeometryModel3D x:Name="Tail" >
-                                    <GeometryModel3D.Geometry>
-                                        <MeshGeometry3D Positions="0 0 0, 0 0 -2, 0 1 0" TriangleIndices="0, 1, 2" />
-                                    </GeometryModel3D.Geometry>
-                                    <GeometryModel3D.Material>
-                                        <DiffuseMaterial>
-                                            <DiffuseMaterial.Brush>
-                                                <SolidColorBrush Color="Red" Opacity="1.0" />
-                                            </DiffuseMaterial.Brush>
-                                        </DiffuseMaterial>
-                                    </GeometryModel3D.Material>
-                                </GeometryModel3D>
-                            </ModelVisual3D.Content>
-                            <ModelVisual3D.Transform>
-                                <Transform3DGroup>
-                                    <MatrixTransform3D/>
-                                    <ScaleTransform3D ScaleZ="1.0" x:Name="TailLengthScale"/>
-                                </Transform3DGroup>
-                            </ModelVisual3D.Transform>
-                        </ModelVisual3D>
-                        <ModelVisual3D>
-                            <ModelVisual3D.Content>
-                                <GeometryModel3D x:Name="Arm" >
-                                    <GeometryModel3D.Geometry>
-                                        <MeshGeometry3D Positions="0 0 0, 0 0 -2, 0 1 0" TriangleIndices="0, 1, 2" />
-                                    </GeometryModel3D.Geometry>
-                                    <GeometryModel3D.Material>
-                                        <DiffuseMaterial>
-                                            <DiffuseMaterial.Brush>
-                                                <SolidColorBrush Color="Green" Opacity="1.0" />
-                                            </DiffuseMaterial.Brush>
-                                        </DiffuseMaterial>
-                                    </GeometryModel3D.Material>
-                                </GeometryModel3D>
-                            </ModelVisual3D.Content>
-                            <ModelVisual3D.Transform>
-                                <Transform3DGroup>
-                                    <MatrixTransform3D/>
-                                    <RotateTransform3D>
-                                        <RotateTransform3D.Rotation>
-                                            <AxisAngleRotation3D Axis="0 1 0" Angle="90"/>
-                                        </RotateTransform3D.Rotation>
-                                    </RotateTransform3D>
-                                </Transform3DGroup>
-                            </ModelVisual3D.Transform>
-                        </ModelVisual3D>
-                    </ModelVisual3D.Children>
-                    <ModelVisual3D.Transform>
-                        <Transform3DGroup>
-                            <MatrixTransform3D x:Name="Mat"/>
-                            <RotateTransform3D>
-                                <RotateTransform3D.Rotation >
-                                    <AxisAngleRotation3D Angle="0" Axis="0,0,1" x:Name="ZAxisRotation"/>
-                                </RotateTransform3D.Rotation>
-                            </RotateTransform3D>
-                            <RotateTransform3D >
-                                <RotateTransform3D.Rotation >
-                                    <AxisAngleRotation3D Angle="0" Axis="0,1,0" x:Name="YAxisRotation"/>
-                                </RotateTransform3D.Rotation>
-                            </RotateTransform3D>
-                            <RotateTransform3D >
-                                <RotateTransform3D.Rotation>
-                                    <AxisAngleRotation3D Angle="0" Axis="1,0,0" x:Name="XAxisRotation"/>
-                                </RotateTransform3D.Rotation>
-                            </RotateTransform3D>
-                        </Transform3DGroup>
-                    </ModelVisual3D.Transform>
-                </ModelVisual3D>
-            </Viewport3D>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="28" />
+                        <RowDefinition Height="20" />
+                        <RowDefinition Height="20" />
+                        <RowDefinition Height="20" />
+                        <RowDefinition Height="20" />
+                        <RowDefinition Height="20" />
+                        <RowDefinition Height="20" />
+                        <RowDefinition Height="20" />
+                        <RowDefinition Height="60" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="TitleText" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">Title</TextBlock>
+                    <TextBlock x:Name="XValueText" Grid.Row="1" Grid.Column="0">x:</TextBlock>
+                    <TextBlock x:Name="YValueText" Grid.Row="2" Grid.Column="0">y:</TextBlock>
+                    <TextBlock x:Name="ZValueText" Grid.Row="3" Grid.Column="0">z:</TextBlock>
+                    <TextBlock x:Name="AValueText" Grid.Row="4" Grid.Column="0">a:</TextBlock>
+                    <TextBlock x:Name="TValueText" Grid.Row="5" Grid.Column="0">t:</TextBlock>
+                    <TextBlock x:Name="DValueText" Grid.Row="6" Grid.Column="0">d:</TextBlock>
+                    <!--<CheckBox x:Name="ZeroCheckBox" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" Grid.Column="2" Unchecked="ZeroCheckBox_Unchecked" Checked="ZeroCheckBox_Checked">Zero</CheckBox>
+                    <CheckBox x:Name="XYZCheckBox" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="2" Grid.Column="2" Unchecked="XYZCheckBox_Unchecked" Checked="XYZCheckBox_Checked">+XYZ</CheckBox>-->
+
+                </Grid>
+                <Viewport3D Name="Canvas" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="1">
+                    <Viewport3D.Camera>
+                        <PerspectiveCamera x:Name="Camera" Position="4,0,0" LookDirection="-1,0,0" UpDirection="0,0,1"/>
+                    </Viewport3D.Camera>
+                    <ModelVisual3D >
+                        <ModelVisual3D.Content >
+                            <AmbientLight Color="White" />
+                        </ModelVisual3D.Content >
+                    </ModelVisual3D >
+                    <ModelVisual3D x:Name="Pointer">
+                        <ModelVisual3D.Children>
+                            <ModelVisual3D>
+                                <ModelVisual3D.Content>
+                                    <GeometryModel3D x:Name="Body" >
+                                        <GeometryModel3D.Geometry>
+                                            <MeshGeometry3D Positions="-1 0 0, 1 0 0, 0 1 0" TriangleIndices="0, 1, 2" />
+                                        </GeometryModel3D.Geometry>
+                                        <GeometryModel3D.Material>
+                                            <DiffuseMaterial>
+                                                <DiffuseMaterial.Brush>
+                                                    <SolidColorBrush Color="Yellow" Opacity="0.6" />
+                                                </DiffuseMaterial.Brush>
+                                            </DiffuseMaterial>
+                                        </GeometryModel3D.Material>
+                                    </GeometryModel3D>
+                                </ModelVisual3D.Content>
+                            </ModelVisual3D>
+                            <ModelVisual3D>
+                                <ModelVisual3D.Content>
+                                    <GeometryModel3D x:Name="Head" >
+                                        <GeometryModel3D.Geometry>
+                                            <MeshGeometry3D Positions="0 0 0, 0 0 2, 0 1 0" TriangleIndices="0, 1, 2" />
+                                        </GeometryModel3D.Geometry>
+                                        <GeometryModel3D.Material>
+                                            <DiffuseMaterial>
+                                                <DiffuseMaterial.Brush>
+                                                    <SolidColorBrush Color="Blue" Opacity="0.8" />
+                                                </DiffuseMaterial.Brush>
+                                            </DiffuseMaterial>
+                                        </GeometryModel3D.Material>
+                                    </GeometryModel3D>
+
+                                </ModelVisual3D.Content>
+                                <ModelVisual3D.Transform>
+                                    <Transform3DGroup>
+                                        <MatrixTransform3D/>
+                                        <ScaleTransform3D ScaleZ="1.0" x:Name="HeadLengthScale"/>
+                                    </Transform3DGroup>
+                                </ModelVisual3D.Transform>
+                            </ModelVisual3D>
+                            <ModelVisual3D>
+                                <ModelVisual3D.Content>
+                                    <GeometryModel3D x:Name="Tail" >
+                                        <GeometryModel3D.Geometry>
+                                            <MeshGeometry3D Positions="0 0 0, 0 0 -2, 0 1 0" TriangleIndices="0, 1, 2" />
+                                        </GeometryModel3D.Geometry>
+                                        <GeometryModel3D.Material>
+                                            <DiffuseMaterial>
+                                                <DiffuseMaterial.Brush>
+                                                    <SolidColorBrush Color="Red" Opacity="1.0" />
+                                                </DiffuseMaterial.Brush>
+                                            </DiffuseMaterial>
+                                        </GeometryModel3D.Material>
+                                    </GeometryModel3D>
+                                </ModelVisual3D.Content>
+                                <ModelVisual3D.Transform>
+                                    <Transform3DGroup>
+                                        <MatrixTransform3D/>
+                                        <ScaleTransform3D ScaleZ="1.0" x:Name="TailLengthScale"/>
+                                    </Transform3DGroup>
+                                </ModelVisual3D.Transform>
+                            </ModelVisual3D>
+                            <ModelVisual3D>
+                                <ModelVisual3D.Content>
+                                    <GeometryModel3D x:Name="Arm" >
+                                        <GeometryModel3D.Geometry>
+                                            <MeshGeometry3D Positions="0 0 0, 0 0 -2, 0 1 0" TriangleIndices="0, 1, 2" />
+                                        </GeometryModel3D.Geometry>
+                                        <GeometryModel3D.Material>
+                                            <DiffuseMaterial>
+                                                <DiffuseMaterial.Brush>
+                                                    <SolidColorBrush Color="Green" Opacity="1.0" />
+                                                </DiffuseMaterial.Brush>
+                                            </DiffuseMaterial>
+                                        </GeometryModel3D.Material>
+                                    </GeometryModel3D>
+                                </ModelVisual3D.Content>
+                                <ModelVisual3D.Transform>
+                                    <Transform3DGroup>
+                                        <MatrixTransform3D/>
+                                        <RotateTransform3D>
+                                            <RotateTransform3D.Rotation>
+                                                <AxisAngleRotation3D Axis="0 1 0" Angle="90"/>
+                                            </RotateTransform3D.Rotation>
+                                        </RotateTransform3D>
+                                    </Transform3DGroup>
+                                </ModelVisual3D.Transform>
+                            </ModelVisual3D>
+                        </ModelVisual3D.Children>
+                        <ModelVisual3D.Transform>
+                            <Transform3DGroup>
+                                <MatrixTransform3D x:Name="Mat"/>
+                                <RotateTransform3D>
+                                    <RotateTransform3D.Rotation >
+                                        <AxisAngleRotation3D Angle="0" Axis="0,0,1" x:Name="ZAxisRotation"/>
+                                    </RotateTransform3D.Rotation>
+                                </RotateTransform3D>
+                                <RotateTransform3D >
+                                    <RotateTransform3D.Rotation >
+                                        <AxisAngleRotation3D Angle="0" Axis="0,1,0" x:Name="YAxisRotation"/>
+                                    </RotateTransform3D.Rotation>
+                                </RotateTransform3D>
+                                <RotateTransform3D >
+                                    <RotateTransform3D.Rotation>
+                                        <AxisAngleRotation3D Angle="0" Axis="1,0,0" x:Name="XAxisRotation"/>
+                                    </RotateTransform3D.Rotation>
+                                </RotateTransform3D>
+                            </Transform3DGroup>
+                        </ModelVisual3D.Transform>
+                    </ModelVisual3D>
+                </Viewport3D>
+
+            </Grid>
+            <local:DrawCanvas x:Name="CurveCanvas" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"></local:DrawCanvas>
+
         </Grid>
+
     </Border>
     
 </UserControl>
