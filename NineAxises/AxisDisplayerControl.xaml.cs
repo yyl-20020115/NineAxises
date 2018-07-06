@@ -87,9 +87,6 @@ namespace NineAxises
 
         public Vector3D ZeroVector { get => zeroVector; set { zeroVector = value; this.Update(); } }
 
-        public Vector3D MaxVector { get => _maxVector; set { _maxVector = value; this.Update(); } }
-        public Vector3D MaxATD { get => _maxATD; set { _maxATD = value; this.Update(); } }
-
         public System.Drawing.Color XColor { get => _xColor; set { _xColor = value; this.Update(); } }
         public System.Drawing.Color YColor { get => _yColor; set { _yColor = value; this.Update(); } }
         public System.Drawing.Color ZColor { get => _zColor; set { _zColor = value; this.Update(); } }
@@ -97,7 +94,6 @@ namespace NineAxises
         public System.Drawing.Color AColor { get => _aColor; set { _aColor = value; this.Update(); } }
         public System.Drawing.Color TColor { get => _tColor; set { _tColor = value; this.Update(); } }
         public System.Drawing.Color DColor { get => _dColor; set { _dColor = value; this.Update(); } }
-
 
         public AxisDisplayerControl()
         {
@@ -108,6 +104,7 @@ namespace NineAxises
             this.AText = "a";
             this.TText = "t";
             this.DText = "d";
+            this.CurveCanvas.TextFont = new System.Drawing.Font(this.FontFamily.Source, (float)this.FontSize);
         }
 
         public virtual void Look(Point3D SelfLocation)
@@ -126,7 +123,7 @@ namespace NineAxises
             this.Head.Geometry = this.BuildCylinder(this.StickRaidus, this.StickLength, this.Segments);
             this.Body.Geometry = this.BuildCylinder(this.BodyRadius, this.BodyThickness, this.Segments);
             this.Tail.Geometry = this.BuildCylinder(this.StickRaidus, -this.StickLength, this.Segments);
-            this.Arm.Geometry = this.BuildCylinder(this.StickRaidus, this.StickLength, this.Segments);
+            this._Arm.Geometry = this.BuildCylinder(this.StickRaidus, this.StickLength, this.Segments);
         }
         private void Update()
         {
@@ -145,10 +142,6 @@ namespace NineAxises
             }
         }
 
-        private Vector3D Divide(Vector3D a,Vector3D b)
-        {
-            return new Vector3D(a.X / b.X, a.Y / b.Y, a.Z / b.Z);
-        }
         private void Draw(Vector3D V)
         {
             if(this.DrawMode == Modes.Vector)
@@ -156,17 +149,22 @@ namespace NineAxises
                 this.CurveCanvas.XColor = this.XColor;
                 this.CurveCanvas.YColor = this.YColor;
                 this.CurveCanvas.ZColor = this.ZColor;
+                this.CurveCanvas.XText = this.XText;
+                this.CurveCanvas.YText = this.YText;
+                this.CurveCanvas.ZText = this.ZText;
 
-                this.CurveCanvas.Draw(this.Divide(this.lastVector, this.MaxVector));
-
+                this.CurveCanvas.AddData(this.lastVector);
             }
             else if(this.DrawMode == Modes.Rotate)
             {
                 this.CurveCanvas.XColor = this.AColor;
                 this.CurveCanvas.YColor = this.TColor;
                 this.CurveCanvas.ZColor = this.DColor;
+                this.CurveCanvas.XText = this.AText;
+                this.CurveCanvas.YText = this.TText;
+                this.CurveCanvas.ZText = this.DText;
 
-                this.CurveCanvas.Draw(this.Divide(this.lastATD, this.MaxATD));
+                this.CurveCanvas.AddData(this.lastATD);
             }
 
         }
@@ -270,7 +268,7 @@ namespace NineAxises
             {
                 text = "+" + text;
             }
-            text = text.PadRight(18, '0');
+            text = text.PadRight(20, '0');
             return text;
         }
         private void UserControl_Initialized(object sender, EventArgs e)

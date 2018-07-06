@@ -5,18 +5,17 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:NineAxises"
              mc:Ignorable="d" 
-             d:DesignHeight="300" d:DesignWidth="300" Initialized="UserControl_Initialized" FontFamily="Consolas" FontSize="16">
+             d:DesignHeight="300" d:DesignWidth="400" Initialized="UserControl_Initialized" FontFamily="Consolas" FontSize="16">
     <Border BorderBrush="Blue" BorderThickness="2" Padding="4">
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition/>
-                <RowDefinition/>
+                <RowDefinition Height="180"/>
+                <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <Grid>
-
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition/>
-                    <ColumnDefinition/>
+                    <ColumnDefinition Width="320"/>
+                    <ColumnDefinition />
                 </Grid.ColumnDefinitions>
                 <Grid>
                     <Grid.RowDefinitions>
@@ -28,21 +27,22 @@
                         <RowDefinition Height="20" />
                         <RowDefinition Height="20" />
                         <RowDefinition Height="20" />
-                        <RowDefinition Height="60" />
+                        <RowDefinition Height="60*" />
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition/>
-                        <ColumnDefinition Width="40"/>
+                        <ColumnDefinition Width="243*"/>
+                        <ColumnDefinition Width="41*"/>
+                        <ColumnDefinition Width="36"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock x:Name="TitleText" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">Title</TextBlock>
-                    <TextBlock x:Name="XValueText" Grid.Row="1" Grid.Column="0">x:</TextBlock>
-                    <TextBlock x:Name="YValueText" Grid.Row="2" Grid.Column="0">y:</TextBlock>
-                    <TextBlock x:Name="ZValueText" Grid.Row="3" Grid.Column="0">z:</TextBlock>
-                    <TextBlock x:Name="AValueText" Grid.Row="4" Grid.Column="0">a:</TextBlock>
-                    <TextBlock x:Name="TValueText" Grid.Row="5" Grid.Column="0">t:</TextBlock>
-                    <TextBlock x:Name="DValueText" Grid.Row="6" Grid.Column="0">d:</TextBlock>
-                    <CheckBox x:Name="ZeroCheckBox" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" Grid.Column="2" Unchecked="ZeroCheckBox_Unchecked" Checked="ZeroCheckBox_Checked">Z</CheckBox>
-                    <CheckBox x:Name="XYZCheckBox" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="2" Grid.Column="2" Unchecked="XYZCheckBox_Unchecked" Checked="XYZCheckBox_Checked">A</CheckBox>
+                    <TextBlock x:Name="TitleText" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0" Margin="138,5,61,4">Title</TextBlock>
+                    <TextBlock x:Name="XValueText" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">x:</TextBlock>
+                    <TextBlock x:Name="YValueText" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2">y:</TextBlock>
+                    <TextBlock x:Name="ZValueText" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2">z:</TextBlock>
+                    <TextBlock x:Name="AValueText" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2">a:</TextBlock>
+                    <TextBlock x:Name="TValueText" Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2">t:</TextBlock>
+                    <TextBlock x:Name="DValueText" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2">d:</TextBlock>
+                    <CheckBox x:Name="ZeroCheckBox" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" Grid.Column="2" Unchecked="ZeroCheckBox_Unchecked" Checked="ZeroCheckBox_Checked" Margin="4,1">Z</CheckBox>
+                    <CheckBox x:Name="XYZCheckBox" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="2" Grid.Column="2" Unchecked="XYZCheckBox_Unchecked" Checked="XYZCheckBox_Checked" Margin="4,1">A</CheckBox>
 
                 </Grid>
                 <Viewport3D Name="Canvas" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="1">
@@ -119,7 +119,7 @@
                             </ModelVisual3D>
                             <ModelVisual3D>
                                 <ModelVisual3D.Content>
-                                    <GeometryModel3D x:Name="Arm" >
+                                    <GeometryModel3D x:Name="_Arm" >
                                         <GeometryModel3D.Geometry>
                                             <MeshGeometry3D Positions="0 0 0, 0 0 -2, 0 1 0" TriangleIndices="0, 1, 2" />
                                         </GeometryModel3D.Geometry>
@@ -173,5 +173,5 @@
         </Grid>
 
     </Border>
-    
+
 </UserControl>

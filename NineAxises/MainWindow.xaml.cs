@@ -49,12 +49,15 @@ namespace NineAxises
 
         }
 
-
-
         private void Window_Initialized(object sender, EventArgs e)
         {
             
             this.Title = this.DefaultTitle = "九轴传感器";
+            this.GravityDisplay.UnitAngle
+                = this.MagnetDisplay.UnitAngle
+                = this.AngleSpeedDisplay.UnitAngle
+                = this.AngleValueDisplay.UnitAngle
+                = "°";
 
             this.GravityDisplay.Title = "重力场";
             this.GravityDisplay.AText = "重力场强度";
@@ -62,59 +65,35 @@ namespace NineAxises
             this.GravityDisplay.DText = "垂直方向角";
             this.GravityDisplay.UnitValue = "g";
             this.GravityDisplay.ScaleFactor = 1.0;
-            this.GravityDisplay.MaxVector = new Vector3D(GFactor, GFactor, GFactor);
-            this.GravityDisplay.MaxATD = new Vector3D(GFactor, PFactor, RFactor);
+            this.GravityDisplay.InputMode = AxisDisplayerControl.Modes.Vector;
 
             this.MagnetDisplay.AText = "磁场强度  ";
             this.MagnetDisplay.TText = "水平方向角";
             this.MagnetDisplay.DText = "垂直方向角";
             this.MagnetDisplay.Title = "磁场";
             this.MagnetDisplay.UnitValue = "uT";
-            this.MagnetDisplay.ScaleFactor = 1.0 / 1000.0;
-            this.MagnetDisplay.MaxVector = new Vector3D(MFactor, MFactor, MFactor);
-            this.MagnetDisplay.MaxATD = new Vector3D(MFactor, PFactor, RFactor);
-
-            this.GravityDisplay.UnitAngle
-                = this.MagnetDisplay.UnitAngle
-                = this.AngleSpeedDisplay.UnitAngle
-                = this.AngleValueDisplay.UnitAngle
-                = "°";
-
-
-            this.AngleSpeedDisplay.AText = "角速度    ";
-            this.AngleSpeedDisplay.TText = "水平方向角";
-            this.AngleSpeedDisplay.DText = "垂直方向角";
-            this.AngleSpeedDisplay.Title = "角速度";
-            this.AngleSpeedDisplay.UnitValue = "°/s";
-            this.AngleSpeedDisplay.MaxVector = new Vector3D(AFactor, AFactor, AFactor);
-            this.AngleSpeedDisplay.MaxATD = new Vector3D(AFactor, PFactor, RFactor);
+            this.MagnetDisplay.InputMode = AxisDisplayerControl.Modes.Vector;
 
             this.AngleValueDisplay.Title = "方位角";
             this.AngleValueDisplay.UnitValue = "°";
             this.AngleValueDisplay.AText = "滚转角";
             this.AngleValueDisplay.TText = "俯仰角";
             this.AngleValueDisplay.DText = "偏航角";
-            this.AngleValueDisplay.MaxATD = new Vector3D(RFactor, RFactor, RFactor);
-
             this.AngleValueDisplay.AValueText.Visibility = Visibility.Hidden;
             this.AngleValueDisplay.TValueText.Visibility = Visibility.Hidden;
             this.AngleValueDisplay.DValueText.Visibility = Visibility.Hidden;
-
-
-
-
-
-            this.GravityDisplay.InputMode = AxisDisplayerControl.Modes.Vector;
-            this.MagnetDisplay.InputMode = AxisDisplayerControl.Modes.Vector;
-            this.AngleSpeedDisplay.InputMode = AxisDisplayerControl.Modes.Vector;
             this.AngleValueDisplay.InputMode = AxisDisplayerControl.Modes.Rotate;
 
-            this.GravityDisplay.AddValue(new Vector3D());
-            this.MagnetDisplay.AddValue(new Vector3D());
-            this.AngleSpeedDisplay.AddValue(new Vector3D());
-            this.AngleValueDisplay.AddValue(new Vector3D());
+            this.AngleSpeedDisplay.AText = "角速度    ";
+            this.AngleSpeedDisplay.TText = "水平方向角";
+            this.AngleSpeedDisplay.DText = "垂直方向角";
+            this.AngleSpeedDisplay.Title = "角速度";
+            this.AngleSpeedDisplay.UnitValue = "°/s";
+            this.AngleSpeedDisplay.InputMode = AxisDisplayerControl.Modes.Vector;
 
             this.RebuildMainMenu();
+
+            Thread.CurrentThread.Priority = ThreadPriority.Highest;
         }
 
         protected override void OnClosing(CancelEventArgs e)
