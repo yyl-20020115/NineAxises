@@ -19,12 +19,11 @@ namespace NineAxises
         private VisualCollection graphics = null;
         private DrawingVisual visual = null;
 
-        private const double MinValue = 1.0 / double.MaxValue;
 
-        private Vector3D RangeVector = new Vector3D(MinValue, MinValue, MinValue);
+        private Vector3D RangeVector = new Vector3D();
 
         private float tension = 0.5f;
-        private float penWidth = 1.0f;
+        private float penWidth = 1.5f;
         private List<Vector3D> data = new List<Vector3D>();
         private string _xText = string.Empty;
         private string _yText = string.Empty;
@@ -48,6 +47,10 @@ namespace NineAxises
         public string XText { get => _xText; set { _xText = value; } }
         public string YText { get => _yText; set { _yText = value; } }
         public string ZText { get => _zText; set { _zText = value; } }
+
+        public string XUnit { get; set; } = string.Empty;
+        public string YUnit { get; set; } = string.Empty;
+        public string ZUnit { get; set; } = string.Empty;
 
         public float Tension { get => tension; set { tension = value; } }
         public float PenWidth { get => penWidth; set { penWidth = value; } }
@@ -81,28 +84,28 @@ namespace NineAxises
         }
         public void Draw()
         {
-            if (this.data.Count >= 2 * this.ActualWidth)
+            int sc = data.Count - (int)this.ActualWidth;
+            if (sc > 0)
             {
-                this.data = this.data.Skip((int)this.ActualWidth).ToList();
+                this.data = this.data.Skip(sc).ToList();
             }
+
             this.Draw(this.data);
         }
         public void Draw(List<Vector3D> data)
         {
             if (data != null && !double.IsNaN(this.ActualWidth) && !double.IsNaN(this.ActualHeight) && this.ActualWidth >= 1.0 && this.ActualHeight >= 1.0)
             {
-                int sc = data.Count > this.ActualWidth ? (int)this.ActualWidth : data.Count;
+                int sc = data.Count;
 
                 (double[], System.Drawing.Color)[] lines = new(double[], System.Drawing.Color)[3];
-                lines[0] = (new double[sc], this.XColor);
+                lines[0] = (new double[sc], this.ZColor);
                 lines[1] = (new double[sc], this.YColor);
-                lines[2] = (new double[sc], this.ZColor);
+                lines[2] = (new double[sc], this.XColor);
 
-                var ds = data.Skip(data.Count - sc).ToList();
-
-                this.RangeVector.X = ds.Max(d => Math.Abs(d.X));
-                this.RangeVector.Y = ds.Max(d => Math.Abs(d.Y));
-                this.RangeVector.Z = ds.Max(d => Math.Abs(d.Z));
+                this.RangeVector.X = data.Max(d => Math.Abs(d.X));
+                this.RangeVector.Y = data.Max(d => Math.Abs(d.Y));
+                this.RangeVector.Z = data.Max(d => Math.Abs(d.Z));
 
                 if(this.RangeVector.X == 0.0)
                 {
@@ -117,11 +120,11 @@ namespace NineAxises
                     this.RangeVector.Z = 1.0;
                 }
                 int i = 0;
-                foreach (var d in ds)
+                foreach (var d in data)
                 {
-                    lines[0].Item1[i] = d.X/this.RangeVector.X;
+                    lines[0].Item1[i] = d.Z/this.RangeVector.Z;
                     lines[1].Item1[i] = d.Y/this.RangeVector.Y;
-                    lines[2].Item1[i] = d.Z/this.RangeVector.Z;
+                    lines[2].Item1[i] = d.X/this.RangeVector.X;
                     i++;
                 }
                 this.DrawCurves(lines);
@@ -155,22 +158,25 @@ namespace NineAxises
                 if (this.DrawText)
                 {
                     graphics.Transform = new System.Drawing.Drawing2D.Matrix(1, 0, 0, 1, 0, 0);//Y轴向上为正，X向右为
-                    graphics.TranslateTransform(0, (int)(ActualHeight / 2), MatrixOrder.Append);
+                    graphics.TranslateTransform(0, (int)(ActualHeight / 2.0), MatrixOrder.Append);
+
+                    string xvt = this.XText + string.Format(TextFormatTools.FormatText, TextFormatTools.AlignDoubleValue(this.RangeVector.X), this.XUnit);
+                    string yvt = this.YText + string.Format(TextFormatTools.FormatText, TextFormatTools.AlignDoubleValue(this.RangeVector.Y), this.YUnit);
+                    string zvt = this.ZText + string.Format(TextFormatTools.FormatText, TextFormatTools.AlignDoubleValue(this.RangeVector.Z), this.ZUnit);
 
                     float h = this.MeasureSize(graphics).Height;
                     using (var XBrush = new SolidBrush(this.XColor))
                     {
-                        graphics.DrawString(this.XText ?? string.Empty, _textFont, XBrush, 0.0f, -h - h / 2);
+                        graphics.DrawString(xvt, _textFont, XBrush, 0.0f, -h - h / 2.0f);
                     }
                     using (var YBrush = new SolidBrush(this.YColor))
                     {
-                        graphics.DrawString(this.YText ?? string.Empty, _textFont, YBrush, 0.0f, 0 - h / 2);
+                        graphics.DrawString(yvt, _textFont, YBrush, 0.0f, +0 - h / 2.0f);
                     }
                     using (var ZBrush = new SolidBrush(this.ZColor))
                     {
-                        graphics.DrawString(this.ZText ?? string.Empty, _textFont, ZBrush, 0.0f, h - h / 2);
+                        graphics.DrawString(zvt, _textFont, ZBrush, 0.0f, +h - h / 2.0f);
                     }
-
                 }
                 using (var context = this.visual.RenderOpen())
                 {
@@ -186,12 +192,12 @@ namespace NineAxises
                 using (System.Drawing.Pen CurvePen = new System.Drawing.Pen(color, penWidth))
                 {
                     PointF[] CurvePointF = new PointF[points.Length];
-                    float xSlice = (float)this.ActualWidth / points.Length;
-                    float yHeight = (float)this.ActualHeight / 2.0f;
+                    float slice = (float)this.ActualWidth / points.Length;
+                    float height = (float)this.ActualHeight / 2.0f;
                     for (int i = 0; i < points.Length; i++)
                     {
-                        float x = xSlice * i;
-                        float y = (float)(yHeight * points[i]);
+                        float x = slice * i;
+                        float y = (float)(height * points[i]);
                         CurvePointF[i] = new PointF(x, y);
                     }
                     graphics.DrawCurve(CurvePen, CurvePointF, tension);

@@ -5,6 +5,8 @@ using System.IO.Ports;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media.Media3D;
 using System.Windows.Threading;
 
@@ -38,6 +40,7 @@ namespace NineAxises
 
         private bool closing = false;
         private bool closed = false;
+        private bool paused = false;
 
         private UpdateData updateData = null;
 
@@ -53,17 +56,17 @@ namespace NineAxises
         {
             
             this.Title = this.DefaultTitle = "九轴传感器";
-            this.GravityDisplay.UnitAngle
-                = this.MagnetDisplay.UnitAngle
-                = this.AngleSpeedDisplay.UnitAngle
-                = this.AngleValueDisplay.UnitAngle
+            this.GravityDisplay.AngleUnit
+                = this.MagnetDisplay.AngleUnit
+                = this.AngleSpeedDisplay.AngleUnit
+                = this.AngleValueDisplay.AngleUnit
                 = "°";
 
             this.GravityDisplay.Title = "重力场";
             this.GravityDisplay.AText = "重力场强度";
             this.GravityDisplay.TText = "水平方向角";
             this.GravityDisplay.DText = "垂直方向角";
-            this.GravityDisplay.UnitValue = "g";
+            this.GravityDisplay.ValueUnit = "g";
             this.GravityDisplay.ScaleFactor = 1.0;
             this.GravityDisplay.InputMode = AxisDisplayerControl.Modes.Vector;
 
@@ -71,11 +74,11 @@ namespace NineAxises
             this.MagnetDisplay.TText = "水平方向角";
             this.MagnetDisplay.DText = "垂直方向角";
             this.MagnetDisplay.Title = "磁场";
-            this.MagnetDisplay.UnitValue = "uT";
+            this.MagnetDisplay.ValueUnit = "uT";
             this.MagnetDisplay.InputMode = AxisDisplayerControl.Modes.Vector;
 
             this.AngleValueDisplay.Title = "方位角";
-            this.AngleValueDisplay.UnitValue = "°";
+            this.AngleValueDisplay.ValueUnit = "°";
             this.AngleValueDisplay.AText = "滚转角";
             this.AngleValueDisplay.TText = "俯仰角";
             this.AngleValueDisplay.DText = "偏航角";
@@ -88,7 +91,7 @@ namespace NineAxises
             this.AngleSpeedDisplay.TText = "水平方向角";
             this.AngleSpeedDisplay.DText = "垂直方向角";
             this.AngleSpeedDisplay.Title = "角速度";
-            this.AngleSpeedDisplay.UnitValue = "°/s";
+            this.AngleSpeedDisplay.ValueUnit = "°/s";
             this.AngleSpeedDisplay.InputMode = AxisDisplayerControl.Modes.Vector;
 
             this.RebuildMainMenu();
@@ -168,7 +171,7 @@ namespace NineAxises
                         //440Bytes/s / 11Bytes/sample = 40 samples/s
                         if (((RmBuffer[0] + RmBuffer[1] + RmBuffer[2] + RmBuffer[3] + RmBuffer[4] + RmBuffer[5] + RmBuffer[6] + RmBuffer[7] + RmBuffer[8] + RmBuffer[9]) & 0xff)
                             == RmBuffer[10])
-                        {
+                        {                            
                             Dispatcher.Invoke(
                                 this.updateData,
                                 TimeSpan.FromMilliseconds(
@@ -198,80 +201,84 @@ namespace NineAxises
 
         private void DecodeDataAndUpdate(byte[] buffer)
         {
-            double[] Data = new double[4];
-            Data[0] = BitConverter.ToInt16(buffer, 2);
-            Data[1] = BitConverter.ToInt16(buffer, 4);
-            Data[2] = BitConverter.ToInt16(buffer, 6);
-            Data[3] = BitConverter.ToInt16(buffer, 8);
-
-            switch (buffer[1])
+            if (!this.paused)
             {
-                case 0x50:
-                    //ChipTime
-                    break;
-                case 0x51:
-                    //Gravity
-                    this.GravityDisplay.AddValue(
-                        new Vector3D(
-                            Data[0] / 32768.0 * 16.0,
-                            Data[1] / 32768.0 * 16.0,
-                            Data[2] / 32768.0 * 16.0
-                            )
-                        );
-                    break;
-                case 0x52:
-                    //AngleSpeed
-                    this.AngleSpeedDisplay.AddValue(
-                        new Vector3D(
-                            Data[0] / 32768.0 * 2000.0,
-                            Data[1] / 32768.0 * 2000.0,
-                            Data[2] / 32768.0 * 2000.0
-                            )
-                        );
-                    break;
-                case 0x53:
-                    //AngleValue
-                    this.AngleValueDisplay.AddValue(
-                        new Vector3D(
-                            Data[0] / 32768.0 * 180.0,
-                            Data[1] / 32768.0 * 180.0,
-                            Data[2] / 32768.0 * 180.0
-                            )
-                        );
-                    break;
-                case 0x54:
-                    //Magnet
-                    this.MagnetDisplay.AddValue(
-                        new Vector3D(
-                            Data[0] / 32768.0 * 1200.0 * 2.0,
-                            Data[1] / 32768.0 * 1200.0 * 2.0,
-                            Data[2] / 32768.0 * 1200.0 * 2.0
-                            )
-                        );
-                    break;
-                case 0x55:
-                    //PortVoltage
-                    //PortVoltage[0] = Data[0];
-                    //PortVoltage[1] = Data[1];
-                    //PortVoltage[2] = Data[2];
-                    //PortVoltage[3] = Data[3];
-                    break;
-                case 0x56:
-                    //Pressure = BitConverter.ToInt32(byteTemp, 2);
-                    //Altitude = (double)BitConverter.ToInt32(byteTemp, 6) / 100.0;
-                    break;
-                case 0x57:
-                    //Longitude = BitConverter.ToInt32(byteTemp, 2);
-                    //Latitude = BitConverter.ToInt32(byteTemp, 6);
-                    break;
-                case 0x58:
-                    //GPSHeight = (double)BitConverter.ToInt16(byteTemp, 2) / 10.0;
-                    //GPSYaw = (double)BitConverter.ToInt16(byteTemp, 4) / 10.0;
-                    //GroundVelocity = BitConverter.ToInt16(byteTemp, 6) / 1e3;
-                    break;
-                default:
-                    break;
+                double[] Data = new double[4];
+                Data[0] = BitConverter.ToInt16(buffer, 2);
+                Data[1] = BitConverter.ToInt16(buffer, 4);
+                Data[2] = BitConverter.ToInt16(buffer, 6);
+                Data[3] = BitConverter.ToInt16(buffer, 8);
+
+                switch (buffer[1])
+                {
+                    case 0x50:
+                        //ChipTime
+                        break;
+                    case 0x51:
+                        //Gravity
+                        this.GravityDisplay.AddValue(
+                            new Vector3D(
+                                Data[0] / 32768.0 * 16.0,
+                                Data[1] / 32768.0 * 16.0,
+                                Data[2] / 32768.0 * 16.0
+                                )
+                            );
+                        break;
+                    case 0x52:
+                        //AngleSpeed
+                        this.AngleSpeedDisplay.AddValue(
+                            new Vector3D(
+                                Data[0] / 32768.0 * 2000.0,
+                                Data[1] / 32768.0 * 2000.0,
+                                Data[2] / 32768.0 * 2000.0
+                                )
+                            );
+                        break;
+                    case 0x53:
+                        //AngleValue
+                        this.AngleValueDisplay.AddValue(
+                            new Vector3D(
+                                Data[0] / 32768.0 * 180.0,
+                                Data[1] / 32768.0 * 180.0,
+                                Data[2] / 32768.0 * 180.0
+                                )
+                            );
+                        break;
+                    case 0x54:
+                        //Magnet
+                        this.MagnetDisplay.AddValue(
+                            new Vector3D(
+                                Data[0] / 32768.0 * 1200.0 * 2.0,
+                                Data[1] / 32768.0 * 1200.0 * 2.0,
+                                Data[2] / 32768.0 * 1200.0 * 2.0
+                                )
+                            );
+                        break;
+                    case 0x55:
+                        //PortVoltage
+                        //PortVoltage[0] = Data[0];
+                        //PortVoltage[1] = Data[1];
+                        //PortVoltage[2] = Data[2];
+                        //PortVoltage[3] = Data[3];
+                        break;
+                    case 0x56:
+                        //Pressure = BitConverter.ToInt32(byteTemp, 2);
+                        //Altitude = (double)BitConverter.ToInt32(byteTemp, 6) / 100.0;
+                        break;
+                    case 0x57:
+                        //Longitude = BitConverter.ToInt32(byteTemp, 2);
+                        //Latitude = BitConverter.ToInt32(byteTemp, 6);
+                        break;
+                    case 0x58:
+                        //GPSHeight = (double)BitConverter.ToInt16(byteTemp, 2) / 10.0;
+                        //GPSYaw = (double)BitConverter.ToInt16(byteTemp, 4) / 10.0;
+                        //GroundVelocity = BitConverter.ToInt16(byteTemp, 6) / 1e3;
+                        break;
+                    default:
+                        break;
+                }
             }
+
         }
 
 
@@ -348,7 +355,13 @@ namespace NineAxises
             var CloseMenuItem = new MenuItem() { Header = "_Close" };
             CloseMenuItem.Click += CloseMenuItem_Click;
             this.MainMenu.Items.Clear();
-            List<string> Names = new List<string>(SerialPort.GetPortNames());
+
+            var PauseMenuItem = new MenuItem() { Header = "_Pause" };
+            PauseMenuItem.Click += PauseMenuItem_Click;
+
+            //PauseMenuItem.Command = EditingCommands.ToggleInsert;
+                
+            var Names = new List<string>(SerialPort.GetPortNames());
 
             Names.Sort(new ComNameComparer());
 
@@ -370,7 +383,16 @@ namespace NineAxises
             this.MainMenu.Items.Add(RefreshMenuItem);
             this.MainMenu.Items.Add(CloseMenuItem);
             this.MainMenu.Items.Add(new Separator());
+            this.MainMenu.Items.Add(PauseMenuItem);
+            this.MainMenu.Items.Add(new Separator());
             this.MainMenu.Items.Add(ExitMenuItem);
+        }
+
+        private void PauseMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            MenuItem mi = sender as MenuItem;
+
+            mi.IsChecked = (this.paused = !this.paused);
         }
 
         private void CloseMenuItem_Click(object sender, RoutedEventArgs e)

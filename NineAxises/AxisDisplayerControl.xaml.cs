@@ -7,13 +7,12 @@ using System.Windows.Media.Media3D;
 
 namespace NineAxises
 {
+
     /// <summary>
     /// AxisDisplayerControl.xaml 的交互逻辑
     /// </summary>
     public partial class AxisDisplayerControl : UserControl
     {
-        private const string FormatText = ": {0}{1}";
-
         public enum Modes : int
         {
             None = 0,
@@ -50,14 +49,20 @@ namespace NineAxises
         private Vector3D _maxVector = new Vector3D(1.0, 1.0, 1.0);
         private Vector3D _maxATD = new Vector3D(1.0, 1.0, 1.0);
         private System.Drawing.Color _aColor = System.Drawing.Color.FromArgb(255, 0, 0);
-        private System.Drawing.Color _tColor = System.Drawing.Color.FromArgb(0, 255, 0);
+        private System.Drawing.Color _tColor = System.Drawing.Color.FromArgb(0, 128, 0);
         private System.Drawing.Color _dColor = System.Drawing.Color.FromArgb(0, 0, 255);
-        private System.Drawing.Color _xColor = System.Drawing.Color.FromArgb(255, 255, 0);
-        private System.Drawing.Color _yColor = System.Drawing.Color.FromArgb(0, 255, 255);
+        private System.Drawing.Color _xColor = System.Drawing.Color.FromArgb(255, 128, 0);
+        private System.Drawing.Color _yColor = System.Drawing.Color.FromArgb(0, 128, 128);
         private System.Drawing.Color _zColor = System.Drawing.Color.FromArgb(255, 0, 255);
 
         public Modes InputMode { get => _inputMode; set { _inputMode = value;
                 this._drawMode = this.DrawMode == Modes.None ? this._inputMode : this._drawMode;
+
+                this.XYZCheckBox.Visibility
+                        = this._inputMode == Modes.Rotate 
+                        ? System.Windows.Visibility.Hidden
+                        : System.Windows.Visibility.Visible;
+
                 this.Update(); } }
         public Modes DrawMode { get => _drawMode; set { _drawMode = value; this.CurveCanvas.ClearData(); this.Update(); } }
         public string Title
@@ -75,8 +80,8 @@ namespace NineAxises
         public string TText { get => _tText; set { _tText = value; this.Update(); } }
         public string DText { get => _dText; set { _dText = value; this.Update(); } }
         //public bool IsXYZChecked => this.XYZCheckBox.IsChecked.GetValueOrDefault();
-        public string UnitValue { get => unitValue; set { unitValue = value; this.Update(); } }
-        public string UnitAngle { get => unitAngle; set { unitAngle = value; this.Update(); } }
+        public string ValueUnit { get => unitValue; set { unitValue = value; this.Update(); } }
+        public string AngleUnit { get => unitAngle; set { unitAngle = value; this.Update(); } }
         public double ScaleFactor { get => scaleFactor; set { scaleFactor = value; this.BuildParts(); this.Update(); } }
 
         public double BodyRadius { get => bodyRadius; set { bodyRadius = value; this.BuildParts(); this.Update(); } }
@@ -152,6 +157,9 @@ namespace NineAxises
                 this.CurveCanvas.XText = this.XText;
                 this.CurveCanvas.YText = this.YText;
                 this.CurveCanvas.ZText = this.ZText;
+                this.CurveCanvas.XUnit = this.ValueUnit;
+                this.CurveCanvas.YUnit = this.ValueUnit;
+                this.CurveCanvas.ZUnit = this.ValueUnit;
 
                 this.CurveCanvas.AddData(this.lastVector);
             }
@@ -163,6 +171,9 @@ namespace NineAxises
                 this.CurveCanvas.XText = this.AText;
                 this.CurveCanvas.YText = this.TText;
                 this.CurveCanvas.ZText = this.DText;
+                this.CurveCanvas.XUnit = this.ValueUnit;
+                this.CurveCanvas.YUnit = this.AngleUnit;
+                this.CurveCanvas.ZUnit = this.AngleUnit;
 
                 this.CurveCanvas.AddData(this.lastATD);
             }
@@ -245,32 +256,22 @@ namespace NineAxises
 
         private void UpdateVectorInfo()
         {
-            this.XValueText.Text = this.XText + string.Format(FormatText, this.AlignDoubleValue(this.lastVector.X), this.UnitValue);
-            this.YValueText.Text = this.YText + string.Format(FormatText, this.AlignDoubleValue(this.lastVector.Y), this.UnitValue);
-            this.ZValueText.Text = this.ZText + string.Format(FormatText, this.AlignDoubleValue(this.lastVector.Z), this.UnitValue);
-            this.AValueText.Text = this.AText + string.Format(FormatText, this.AlignDoubleValue(A), this.UnitValue);
-            this.TValueText.Text = this.TText + string.Format(FormatText, this.AlignDoubleValue(T), this.UnitAngle);
-            this.DValueText.Text = this.DText + string.Format(FormatText, this.AlignDoubleValue(D), this.UnitAngle);
+            this.XValueText.Text = this.XText + string.Format(TextFormatTools.FormatText, TextFormatTools.AlignDoubleValue(this.lastVector.X), this.ValueUnit);
+            this.YValueText.Text = this.YText + string.Format(TextFormatTools.FormatText, TextFormatTools.AlignDoubleValue(this.lastVector.Y), this.ValueUnit);
+            this.ZValueText.Text = this.ZText + string.Format(TextFormatTools.FormatText, TextFormatTools.AlignDoubleValue(this.lastVector.Z), this.ValueUnit);
+            this.AValueText.Text = this.AText + string.Format(TextFormatTools.FormatText, TextFormatTools.AlignDoubleValue(A), this.ValueUnit);
+            this.TValueText.Text = this.TText + string.Format(TextFormatTools.FormatText, TextFormatTools.AlignDoubleValue(T), this.AngleUnit);
+            this.DValueText.Text = this.DText + string.Format(TextFormatTools.FormatText, TextFormatTools.AlignDoubleValue(D), this.AngleUnit);
         }
 
 
         protected void UpdateRotateInfo()
         {
-            this.XValueText.Text = this.AText + string.Format(FormatText, this.AlignDoubleValue(this.lastVector.X), this.UnitAngle);
-            this.YValueText.Text = this.TText + string.Format(FormatText, this.AlignDoubleValue(this.lastVector.Y), this.UnitAngle);
-            this.ZValueText.Text = this.DText + string.Format(FormatText, this.AlignDoubleValue(this.lastVector.Z), this.UnitAngle);
+            this.XValueText.Text = this.AText + string.Format(TextFormatTools.FormatText, TextFormatTools.AlignDoubleValue(this.lastVector.X), this.AngleUnit);
+            this.YValueText.Text = this.TText + string.Format(TextFormatTools.FormatText, TextFormatTools.AlignDoubleValue(this.lastVector.Y), this.AngleUnit);
+            this.ZValueText.Text = this.DText + string.Format(TextFormatTools.FormatText, TextFormatTools.AlignDoubleValue(this.lastVector.Z), this.AngleUnit);
         }
 
-        protected string AlignDoubleValue(double v)
-        {
-            string text = string.Format("{0}", v);
-            if (!text.StartsWith("-"))
-            {
-                text = "+" + text;
-            }
-            text = text.PadRight(20, '0');
-            return text;
-        }
         private void UserControl_Initialized(object sender, EventArgs e)
         {
             this.BuildParts();
