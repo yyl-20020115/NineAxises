@@ -45,6 +45,9 @@ namespace NineAxises
         private UpdateData updateData = null;
 
         private string DefaultTitle = string.Empty;
+
+        private MenuItem PauseMenuItem = null;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -348,18 +351,18 @@ namespace NineAxises
         }
         private void RebuildMainMenu()
         {
-            var ExitMenuItem = new MenuItem() { Header = "E_xit" };
+            this.MainMenu.Header = "文件";
+
+            var ExitMenuItem = new MenuItem() { Header = "退出" };
             ExitMenuItem.Click += ExitMenuItem_Click;
-            var RefreshMenuItem = new MenuItem() { Header = "_Refresh" };
+            var RefreshMenuItem = new MenuItem() { Header = "刷新" };
             RefreshMenuItem.Click += RefreshMenuItem_Click;
-            var CloseMenuItem = new MenuItem() { Header = "_Close" };
+            var CloseMenuItem = new MenuItem() { Header = "关闭" };
             CloseMenuItem.Click += CloseMenuItem_Click;
             this.MainMenu.Items.Clear();
 
-            var PauseMenuItem = new MenuItem() { Header = "_Pause" };
+            this.PauseMenuItem = new MenuItem() { Header = "暂停" };
             PauseMenuItem.Click += PauseMenuItem_Click;
-
-            //PauseMenuItem.Command = EditingCommands.ToggleInsert;
                 
             var Names = new List<string>(SerialPort.GetPortNames());
 
@@ -388,11 +391,23 @@ namespace NineAxises
             this.MainMenu.Items.Add(ExitMenuItem);
         }
 
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            base.OnKeyDown(e);
+
+            if(e.Key == Key.Space)
+            {
+                this.PauseMenuItem_Click(this.PauseMenuItem, new RoutedEventArgs());
+            }
+        }
+
         private void PauseMenuItem_Click(object sender, RoutedEventArgs e)
         {
             MenuItem mi = sender as MenuItem;
 
             mi.IsChecked = (this.paused = !this.paused);
+
+            this.Title = mi.IsChecked ? this.DefaultTitle + " (暂停)" : this.DefaultTitle;
         }
 
         private void CloseMenuItem_Click(object sender, RoutedEventArgs e)
