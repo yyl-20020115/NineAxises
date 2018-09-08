@@ -71,6 +71,8 @@ namespace NineAxises
             set { this.TitleText.Text = value ?? string.Empty; }
         }
 
+        public bool AutoUpdate { get; set; } = false;
+
         public string XText { get => _xText; set { _xText = value; this.Update(); } }
         public string YText { get => _yText; set { _yText = value; this.Update(); } }
         public string ZText { get => _zText; set { _zText = value; this.Update(); } }
@@ -130,7 +132,7 @@ namespace NineAxises
             this.Tail.Geometry = this.BuildCylinder(this.StickRaidus, -this.StickLength, this.Segments);
             this._Arm.Geometry = this.BuildCylinder(this.StickRaidus, this.StickLength, this.Segments);
         }
-        private void Update()
+        public void Update()
         {
             switch (this.InputMode)
             {
@@ -212,8 +214,10 @@ namespace NineAxises
             this.YAxisRotation.Angle = N.Y;
             this.ZAxisRotation.Angle = N.Z;
             this.XAxisRotation.Angle = N.X;
-
-            this.Update();
+            if (this.AutoUpdate)
+            {
+                this.Update();
+            }
         }
 
         protected virtual void AddVectorValue(Vector3D V)
@@ -250,7 +254,10 @@ namespace NineAxises
                 this.T = 0.0;
                 this.D = 0.0;
             }
-            this.Update();
+            if (this.AutoUpdate)
+            {
+                this.Update();
+            }
         }
 
 

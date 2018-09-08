@@ -18,7 +18,8 @@ namespace NineAxises
     public partial class MainWindow : Window
     {
         private const int DefaultBaudRate = 115200;
-        private const int DefaultUIDelayTimeMs = 25;
+        private const int DefaultUIDelayTimeMs = 1;
+        private const int MessageCount = 16;
         private const int MessageLength = 11;
         private const int RxBufferLength = MessageLength<<1;
 
@@ -33,6 +34,7 @@ namespace NineAxises
         private SerialPort Port = null;
 
         private delegate void UpdateData(byte[] byteData);
+        private delegate void UpdateDataList(List<byte[]> byteDatas);
 
         private byte[] RxBuffer = new byte[RxBufferLength];
 
@@ -43,6 +45,7 @@ namespace NineAxises
         private bool paused = false;
 
         private UpdateData updateData = null;
+        private UpdateDataList updateDataList = null;
 
         private string DefaultTitle = string.Empty;
 
@@ -52,7 +55,7 @@ namespace NineAxises
         {
             InitializeComponent();
             this.updateData = new UpdateData(this.DecodeDataAndUpdate);
-
+            this.updateDataList = new UpdateDataList(this.DecodeDataAndUpdateList);
         }
 
         private void Window_Initialized(object sender, EventArgs e)
@@ -141,6 +144,7 @@ namespace NineAxises
                 }
             }
         }
+        private List<byte[]> RmBuffers = new List<byte[]>();
         private void Port_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             if (!this.closing)
@@ -174,14 +178,22 @@ namespace NineAxises
                         //440Bytes/s / 11Bytes/sample = 40 samples/s
                         if (((RmBuffer[0] + RmBuffer[1] + RmBuffer[2] + RmBuffer[3] + RmBuffer[4] + RmBuffer[5] + RmBuffer[6] + RmBuffer[7] + RmBuffer[8] + RmBuffer[9]) & 0xff)
                             == RmBuffer[10])
-                        {                            
-                            Dispatcher.Invoke(
-                                this.updateData,
-                                TimeSpan.FromMilliseconds(
-                                    DefaultUIDelayTimeMs
-                                    ),
-                                RmBuffer
-                                );
+                        {
+                            byte[] RmBufferCopy = new byte[RmBuffer.Length];
+                            Array.Copy(RmBuffer, RmBufferCopy, RmBuffer.Length);
+                            RmBuffers.Add(RmBufferCopy);
+
+                            if(RmBuffers.Count == MessageCount)
+                            {
+                                Dispatcher.Invoke(
+                                    this.updateDataList,
+                                    TimeSpan.FromMilliseconds(
+                                        DefaultUIDelayTimeMs
+                                        ),
+                                    RmBuffers
+                                    );
+                                RmBuffers.Clear();
+                            }
                         }
                         for (int i = MessageLength; i < usRxLength; i++)
                         {
@@ -202,6 +214,17 @@ namespace NineAxises
         }
 
 
+        private void DecodeDataAndUpdateList(List<byte[]> buffers)
+        {
+            foreach(var buffer in buffers)
+            {
+                this.DecodeDataAndUpdate(buffer);
+            }
+            this.GravityDisplay.Update();
+            this.MagnetDisplay.Update();
+            this.AngleValueDisplay.Update();
+            this.AngleSpeedDisplay.Update();
+        }
         private void DecodeDataAndUpdate(byte[] buffer)
         {
             if (!this.paused)
